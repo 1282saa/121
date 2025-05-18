@@ -12,6 +12,9 @@ import modules.unified_chatbot as unified_chatbot
 
 app = Flask(__name__)
 
+# 로그 디렉토리 생성
+os.makedirs('logs', exist_ok=True)
+
 # 로깅 설정
 logging.basicConfig(
     level=logging.INFO,
@@ -27,18 +30,18 @@ mimetypes.add_type('text/css', '.css')
 
 # 디렉토리 설정
 ROOT_DIR = Path(__file__).parent
-ECONOMY_TERMS_DIR = Path("/Users/yeong-gwang/Desktop/work/서울경제신문/경제용/economy_terms")
-RECENT_CONTENTS_DIR = Path("/Users/yeong-gwang/Desktop/work/서울경제신문/경제용/recent_contents_final")
+ECONOMY_TERMS_DIR = ROOT_DIR / "data" / "economy_terms"
+RECENT_CONTENTS_DIR = ROOT_DIR / "data" / "recent_contents_final"
 
 logger.info(f"ROOT_DIR: {ROOT_DIR}")
 logger.info(f"ECONOMY_TERMS_DIR: {ECONOMY_TERMS_DIR}")
 logger.info(f"RECENT_CONTENTS_DIR: {RECENT_CONTENTS_DIR}")
 
 # 폴더가 없는 경우 생성
-os.makedirs(ECONOMY_TERMS_DIR, exist_ok=True)
-os.makedirs(RECENT_CONTENTS_DIR, exist_ok=True)
-os.makedirs('logs', exist_ok=True)
-os.makedirs('templates', exist_ok=True)
+os.makedirs(ROOT_DIR / "data" / "economy_terms", exist_ok=True)
+os.makedirs(ROOT_DIR / "data" / "recent_contents_final", exist_ok=True)
+os.makedirs(ROOT_DIR / 'logs', exist_ok=True)
+os.makedirs(ROOT_DIR / 'templates', exist_ok=True)
 
 # 챗봇 초기화 상태
 chatbot_ready = False
@@ -353,15 +356,20 @@ def get_unboxing_video():
         # JSON 데이터가 없어도 처리 가능하도록 수정
         data = request.get_json(force=True, silent=True) or {}
         
-        # Puppeteer 서버로 요청 전송
-        puppeteer_url = 'http://localhost:3001/api/get-unboxing-video'
+        # Puppeteer 서버로 요청 전송 (Railway에서는 사용 안함)
+        use_puppeteer = os.environ.get('USE_PUPPETEER', 'false').lower() == 'true'
+        puppeteer_url = os.environ.get('PUPPETEER_URL', 'http://localhost:3001/api/get-unboxing-video')
         
         logger.info("Puppeteer 서버로 언박싱 비디오 요청")
         
         try:
-            # Puppeteer 서버가 실행 중인지 확인하고 요청
-            response = requests.post(puppeteer_url, json=data, timeout=30)
-            result = response.json()
+            if use_puppeteer:
+                # Puppeteer 서버가 실행 중인지 확인하고 요청
+                response = requests.post(puppeteer_url, json=data, timeout=30)
+                result = response.json()
+            else:
+                # Railway에서는 Puppeteer 사용 안함
+                raise requests.exceptions.ConnectionError("Puppeteer disabled")
             
             if result.get('success'):
                 logger.info(f"비디오 URL 획득 성공: {result.get('url')}")
@@ -466,4 +474,6 @@ if __name__ == '__main__':
     }
     logger.info(f"환경 변수 상태: {env_status}")
     
-    app.run(host='127.0.0.1', port=5000, debug=True) 
+    # Railway 환경에서는 PORT 환경변수 사용
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False) 

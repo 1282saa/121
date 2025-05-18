@@ -5,6 +5,7 @@ __pycache__/
 *.so
 .Python
 env/
+venv/
 build/
 develop-eggs/
 dist/
@@ -22,12 +23,15 @@ var/
 
 # 환경 변수
 .env
+.env.local
 
 # 로그 파일
 *.log
+logs/
 
 # 벡터 데이터베이스
 chroma_db/
+data/chroma_db/
 
 # IDE 파일
 .vscode/
@@ -37,4 +41,24 @@ chroma_db/
 # 데이터 백업 파일
 *.bak
 *.swp
-*.tmp 
+*.tmp
+
+# Node.js (Puppeteer용)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 테스트 파일
+test_*.html
+debug*.html
+*_test.html
+
+# 임시 파일
+simple_unboxing.js
+test_puppeteer*.js
+unboxing_handler.js
+start_puppeteer.sh
+
+# Railway 관련
+.railway/

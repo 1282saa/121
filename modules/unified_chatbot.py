@@ -27,8 +27,8 @@ logger.setLevel(logging.INFO)
 
 # 디렉토리 설정
 ROOT_DIR = Path(os.path.dirname(os.path.abspath(__file__))).parent
-ECONOMY_TERMS_DIR = Path("/Users/yeong-gwang/Desktop/work/서울경제신문/경제용/economy_terms")
-RECENT_CONTENTS_DIR = Path("/Users/yeong-gwang/Desktop/work/서울경제신문/경제용/recent_contents_final")
+ECONOMY_TERMS_DIR = ROOT_DIR / "data" / "economy_terms"
+RECENT_CONTENTS_DIR = ROOT_DIR / "data" / "recent_contents_final"
 
 class UnifiedChatbot:
     """GPT와 Perplexity API를 통합한 챗봇 시스템"""

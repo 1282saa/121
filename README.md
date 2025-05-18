@@ -1,67 +1,110 @@
-# 경제용 챗봇
+# 경제용 AI 챗봇
 
-경제 용어와 콘텐츠를 쉽게 접근할 수 있는 웹 인터페이스와 RAG(Retrieval-Augmented Generation) 기반 챗봇을 제공하는 프로젝트입니다.
+경제 용어와 최신 경제 콘텐츠를 AI 기반으로 검색하고 학습할 수 있는 웹 애플리케이션입니다.
 
 ## 주요 기능
 
-1. **RAG 기반 챗봇**: 경제 용어와 콘텐츠를 기반으로 질문에 답변하는 AI 챗봇
-   - 사용자의 질문에 대해 관련 경제 문서를 검색하고 답변 생성
-   - 관련 문서 링크 제공으로 상세 정보 확인 가능
+1. **AI 기반 경제 질문 답변**: 경제 용어와 콘텐츠를 기반으로 질문에 답변하는 AI 챗봇
+   - 내부 문서 검색 + 실시간 웹 검색을 통한 종합적인 답변
+   - 출처와 인용문 제공으로 신뢰성 있는 정보 전달
 2. **경제 용어 사전**: 다양한 경제 용어에 대한 설명 제공
 3. **최신 경제 콘텐츠**: 최신 경제 트렌드와 뉴스 제공
+4. **서울경제 1면 언박싱**: 서울경제신문 1면 동영상 재생 (선택사항)
 
 ## 기술 스택
 
-- **프론트엔드**: HTML, CSS, JavaScript
-- **백엔드**: Python, Flask
-- **RAG 챗봇**:
-  - **벡터 데이터베이스**: Chroma
+- **프론트엔드**: HTML, TailwindCSS, JavaScript
+- **백엔드**: Python 3.11, Flask
+- **AI 및 검색**:
+  - **벡터 데이터베이스**: ChromaDB
   - **임베딩**: OpenAI (text-embedding-3-small)
-  - **언어 모델**: OpenAI (gpt-3.5-turbo)
-  - **청킹**: SemanticChunker
-  - **검색 기법**: BM25 + 벡터 검색 앙상블
-  - **리랭킹**: LLM 기반 재랭킹
-  - **쿼리 확장**: MultiQueryRetriever
+  - **언어 모델**: OpenAI GPT-3.5-turbo / GPT-4
+  - **실시간 웹 검색**: Perplexity API
   - **프레임워크**: LangChain
+  - **검색 기법**: 하이브리드 검색 (Vector + Keyword)
 
-## 설치 및 실행 방법
+## Railway 배포
 
 ### 사전 요구사항
 
-- Python 3.8 이상
+- GitHub 계정
+- Railway 계정
 - OpenAI API 키
+- Perplexity API 키
+
+### 배포 단계
+
+1. GitHub에 코드 푸시
+
+   ```bash
+   git init
+   git add .
+   git commit -m "Initial commit"
+   git remote add origin https://github.com/yourusername/economy-chatbot.git
+   git push -u origin main
+   ```
+
+2. Railway에서 새 프로젝트 생성
+   - railway.app 접속
+   - "New Project" 클릭
+   - "Deploy from GitHub repo" 선택
+   - 저장소 선택
+
+3. 환경 변수 설정 (Railway Dashboard)
+   - `OPENAI_API_KEY`: OpenAI API 키
+   - `PERPLEXITY_API_KEY`: Perplexity API 키
+   - `SECRET_KEY`: Flask 시크릿 키 (자동 생성 가능)
+
+4. 배포 시작
+   - Railway가 자동으로 빌드 및 배포 진행
+   - 배포 완료 후 제공된 URL로 접속
+
+## 로컬 개발
+
+### 사전 요구사항
+
+- Python 3.11 이상
+- OpenAI API 키
+- Perplexity API 키
 
 ### 설치 단계
 
-1. 저장소 클론하기
+1. 저장소 클론
 
    ```bash
-   git clone https://github.com/username/경제용챗봇.git
-   cd 경제용챗봇
+   git clone https://github.com/yourusername/economy-chatbot.git
+   cd economy-chatbot
    ```
 
-2. 의존성 패키지 설치
+2. 가상환경 생성 및 활성화
+
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # macOS/Linux
+   venv\Scripts\activate     # Windows
+   ```
+
+3. 의존성 설치
 
    ```bash
    pip install -r requirements.txt
    ```
 
-3. OpenAI API 키 설정
+4. 환경 변수 설정
 
    ```bash
    cp .env.example .env
    # .env 파일을 열어 API 키 입력
-   # OPENAI_API_KEY=your_api_key_here
    ```
 
-4. 서버 실행
+5. 서버 실행
 
    ```bash
    python server.py
    ```
 
-5. 웹 브라우저에서 접속
-   - http://localhost:5000 으로 접속
+6. 웹 브라우저에서 접속
+   - http://localhost:5000
 
 ## 프로젝트 구조
 
