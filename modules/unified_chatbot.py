@@ -291,12 +291,15 @@ class UnifiedChatbot:
                 context_parts.append(f"\n[내부문서 {i+1}] {doc.metadata.get('title')}")
                 context_parts.append(doc.page_content[:500])
                 
+                # 문서의 실제 인용 구간 저장
+                quoted_content = doc.page_content.strip()[:150]  # 처음 150자
                 citations.append({
                     "type": "internal",
                     "title": doc.metadata.get('title'),
                     "source": doc.metadata.get('source'),
                     "file_name": doc.metadata.get('file_name'),
-                    "source_type": doc.metadata.get('source_type')
+                    "source_type": doc.metadata.get('source_type'),
+                    "quoted_text": quoted_content  # 인용된 텍스트 구간
                 })
         
         # 웹 검색 정보 추가

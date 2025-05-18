@@ -422,8 +422,9 @@ window.ContentManager = (function () {
   /**
    * 모달 열기
    * @param {Object} item - 표시할 항목 데이터
+   * @param {string} quotedText - 하이라이트할 텍스트 (옵션)
    */
-  function openModal(item) {
+  function openModal(item, quotedText = null) {
     const modal = document.getElementById("content-modal");
     const modalTitle = document.getElementById("modal-title");
     const modalDate = document.getElementById("modal-date");
@@ -434,7 +435,85 @@ window.ContentManager = (function () {
     modalDate.textContent = `작성일: ${item.date} | No.${item.number}`;
 
     // 마크다운 변환 - 원본 내용을 그대로 변환
-    const contentHtml = marked.parse(item.content);
+    let contentHtml = marked.parse(item.content);
+    console.log('Original content length:', item.content.length);
+    console.log('Converted HTML length:', contentHtml.length);
+    
+    // 인용된 텍스트 하이라이트
+    if (quotedText && quotedText.length > 0) {
+      console.log('Attempting to highlight text:', quotedText);
+      console.log('Text length:', quotedText.length);
+      
+      // 더 유연한 텍스트 매칭 방법
+      const searchText = quotedText.trim();
+      console.log('Searching for text:', searchText);
+      
+      // 텍스트 전처리 - 마크다운 특수 문자 제거
+      const cleanSearchText = searchText
+        .replace(/^#+\s*/gm, '') // 헤딩 마크다운 제거
+        .replace(/[*_~`]/g, '') // 강조 마크다운 제거
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1'); // 링크 마크다운 제거
+      
+      console.log('Cleaned search text:', cleanSearchText);
+      
+      // 다양한 길이로 시도
+      const searchLengths = [100, 50, 30, 20];
+      let highlightApplied = false;
+      
+      for (const length of searchLengths) {
+        if (highlightApplied) break;
+        
+        const currentSearchText = cleanSearchText.substring(0, Math.min(length, cleanSearchText.length));
+        if (currentSearchText.length < 10) continue;
+        
+        console.log(`Trying with ${currentSearchText.length} characters:`, currentSearchText);
+        
+        // HTML 태그를 제거한 순수 텍스트에서 검색
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = contentHtml;
+        const plainText = tempDiv.textContent || tempDiv.innerText || '';
+        
+        // 검색 텍스트 위치 찾기
+        const searchIndex = plainText.toLowerCase().indexOf(currentSearchText.toLowerCase());
+        
+        if (searchIndex !== -1) {
+          console.log('Text found in plain text at index:', searchIndex);
+          
+          // HTML에서 해당 텍스트 찾아 하이라이트
+          const escapedText = currentSearchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const htmlRegex = new RegExp(`([^>])(${escapedText})([^<])`, 'gi');
+          
+          contentHtml = contentHtml.replace(htmlRegex, '$1<span class="highlighted-citation">$2</span>$3');
+          
+          // 추가로 태그 내부에 있는 텍스트도 처리
+          const flexibleRegex = new RegExp(`(${escapedText.replace(/\s+/g, '\\s*')})`, 'gi');
+          contentHtml = contentHtml.replace(flexibleRegex, (match, p1) => {
+            if (match.includes('highlighted-citation')) {
+              return match; // 이미 하이라이트된 경우 건너뛰기
+            }
+            return `<span class="highlighted-citation">${p1}</span>`;
+          });
+          
+          highlightApplied = true;
+          console.log('Highlight applied successfully');
+        }
+      }
+      
+      if (!highlightApplied) {
+        console.log('No match found with any search length');
+        // 마지막 시도: 핵심 키워드로 검색
+        const keywords = cleanSearchText.match(/\b\w{4,}\b/g) || [];
+        if (keywords.length > 0) {
+          const keyword = keywords[0];
+          console.log('Trying with keyword:', keyword);
+          const keywordRegex = new RegExp(`(${keyword})`, 'gi');
+          if (contentHtml.match(keywordRegex)) {
+            contentHtml = contentHtml.replace(keywordRegex, '<span class="highlighted-citation">$1</span>');
+            console.log('Keyword-based match found and highlighted');
+          }
+        }
+      }
+    }
 
     // 최종 내용 설정 - 원본 내용을 그대로 표시
     modalContentBody.innerHTML = `
@@ -446,6 +525,16 @@ window.ContentManager = (function () {
     // 모달 표시
     modal.style.display = "block";
     document.body.style.overflow = "hidden"; // 스크롤 방지
+    
+    // 하이라이트된 텍스트로 스크롤
+    if (quotedText) {
+      setTimeout(() => {
+        const highlighted = document.querySelector('.highlighted-citation');
+        if (highlighted) {
+          highlighted.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 200);
+    }
   }
 
   /**
@@ -503,6 +592,74 @@ window.ContentManager = (function () {
     });
   }
 
+  /**
+   * 외부에서 호출하여 특정 콘텐츠 모달을 여는 함수
+   * @param {string} fileName - 파일명
+   * @param {string} sourceType - 소스 유형
+   */
+  function openContentModal(fileName, sourceType) {
+    const dataArray = sourceType === "economy_terms" ? termsData : contentsData;
+    const item = dataArray.find(d => d.fileName === fileName);
+    
+    if (item) {
+      openModal(item);
+    }
+  }
+  
+  /**
+   * 하이라이트와 함께 콘텐츠 모달을 여는 함수
+   * @param {string} fileName - 파일명
+   * @param {string} sourceType - 소스 유형
+   * @param {string} quotedText - 인용된 텍스트
+   */
+  function openContentWithHighlight(fileName, sourceType, quotedText) {
+    console.log('openContentWithHighlight called:', { fileName, sourceType, quotedText });
+    const dataArray = sourceType === "economy_terms" ? termsData : contentsData;
+    const item = dataArray.find(d => d.fileName === fileName);
+    
+    if (item) {
+      console.log('Found item:', item.title);
+      console.log('Item content length:', item.content ? item.content.length : 0);
+      openModal(item, quotedText);
+    } else {
+      console.log('Item not found for fileName:', fileName);
+      console.log('Available files:', dataArray.map(d => d.fileName));
+    }
+  }
+  
+  /**
+   * 인용 상세 정보 표시 (새로운 모달 또는 탭 이동)
+   * @param {string} fileName - 파일명
+   * @param {string} sourceType - 소스 유형
+   * @param {string} quotedText - 인용된 텍스트 (옵션)
+   */
+  function showCitationDetail(fileName, sourceType, quotedText = null) {
+    console.log('showCitationDetail called:', { fileName, sourceType, quotedText });
+    
+    // 해당 탭으로 이동
+    const tabId = sourceType === "economy_terms" ? "tab-terms" : "tab-contents";
+    const tab = document.getElementById(tabId);
+    if (tab) {
+      tab.click();
+    }
+    
+    // 300ms 후에 모달 열기 (탭 전환 애니메이션 대기)
+    setTimeout(() => {
+      // quotedText가 있으면 디코딩
+      let decodedText = null;
+      if (quotedText && quotedText !== 'null' && quotedText !== 'undefined') {
+        try {
+          decodedText = decodeURIComponent(quotedText);
+          console.log('Decoded quoted text:', decodedText);
+        } catch (e) {
+          console.error('Error decoding quoted text:', e);
+          decodedText = quotedText;
+        }
+      }
+      openContentWithHighlight(fileName, sourceType, decodedText);
+    }, 300);
+  }
+
   // 공개 API
   return {
     init,
@@ -510,5 +667,7 @@ window.ContentManager = (function () {
     loadContentsData,
     displayTermsData,
     displayContentsData,
+    openContentModal,
+    showCitationDetail,
   };
 })();

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>모달 비디오 테스트</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      .video-banner {
+        cursor: pointer;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      
+      .video-banner:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+      
+      .loader {
+        width: 40px;
+        height: 40px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #fb923c;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      .video-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      }
+      
+      .video-modal.active {
+        display: flex;
+      }
+      
+      .video-container {
+        position: relative;
+        width: 90%;
+        max-width: 1000px;
+        height: 80vh;
+        background-color: #000;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      
+      .video-close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 40px;
+        height: 40px;
+        background-color: rgba(0, 0, 0, 0.7);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 10;
+        transition: background-color 0.3s;
+      }
+      
+      .video-close:hover {
+        background-color: rgba(0, 0, 0, 0.9);
+      }
+      
+      .loading-message {
+        font-size: 18px;
+        color: white;
+        margin-top: 20px;
+        opacity: 0;
+        animation: fadeInOut 3s ease-in-out;
+      }
+      
+      @keyframes fadeInOut {
+        0% { opacity: 0; }
+        50% { opacity: 1; }
+        100% { opacity: 0; }
+      }
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-5xl mx-auto">
+        <h1 class="text-2xl font-bold mb-6">모달 비디오 테스트</h1>
+        
+        <!-- 비디오 배너 -->
+        <div id="video-banner" class="video-banner rounded-lg overflow-hidden shadow-lg bg-gradient-to-r from-orange-500 to-orange-600 p-6">
+            <div class="flex items-center justify-center text-white">
+                <svg class="w-8 h-8 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"></path>
+                </svg>
+                <span class="text-xl font-bold">서울경제 1면 언박싱</span>
+            </div>
+        </div>
+        
+        <div id="test-result" class="mt-6 p-4 bg-white rounded-lg shadow"></div>
+    </div>
+    
+    <!-- 비디오 모달 -->
+    <div id="video-modal" class="video-modal">
+        <div class="video-container">
+            <div class="video-close" onclick="closeVideoModal()">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </div>
+            <div id="video-loading" class="flex flex-col items-center justify-center h-full">
+                <div class="loader"></div>
+                <div class="loading-message">경제용이 1면을 준비하고 있어요! 🐲</div>
+            </div>
+            <iframe id="video-iframe" style="display: none; width: 100%; height: 100%; border: none;"></iframe>
+        </div>
+    </div>
+    
+    <script>
+        const loadingMessages = [
+            "경제용이 1면을 준비하고 있어요! 🐲",
+            "오늘의 경제 뉴스를 가져오는 중... 📰",
+            "서울경제 1면의 비밀을 파헤치는 중! 🔍",
+            "거의 다 됐어요! 조금만 기다려주세요 ⏰",
+            "경제 상식이 올라가는 느낌이에요! 📈"
+        ];
+        
+        let messageIndex = 0;
+        let messageInterval;
+        
+        document.getElementById('video-banner').addEventListener('click', async () => {
+            const modal = document.getElementById('video-modal');
+            const loading = document.getElementById('video-loading');
+            const iframe = document.getElementById('video-iframe');
+            const loadingMessage = document.querySelector('.loading-message');
+            const resultDiv = document.getElementById('test-result');
+            
+            // Show modal
+            modal.classList.add('active');
+            loading.style.display = 'flex';
+            iframe.style.display = 'none';
+            
+            // 로딩 메시지 순환
+            messageInterval = setInterval(() => {
+                messageIndex = (messageIndex + 1) % loadingMessages.length;
+                loadingMessage.textContent = loadingMessages[messageIndex];
+                
+                // 애니메이션 재시작
+                loadingMessage.style.animation = 'none';
+                setTimeout(() => {
+                    loadingMessage.style.animation = 'fadeInOut 3s ease-in-out';
+                }, 10);
+            }, 3000);
+            
+            try {
+                // Call server to get video URL
+                const response = await fetch('/api/get-unboxing-video', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({})
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.video_url) {
+                    resultDiv.innerHTML = `<p class="text-green-600">URL 획득 성공: ${data.video_url}</p>`;
+                    
+                    // iframe에 비디오 URL 설정
+                    iframe.src = data.video_url;
+                    
+                    // 비디오가 로드되면 표시
+                    iframe.onload = () => {
+                        loading.style.display = 'none';
+                        iframe.style.display = 'block';
+                        clearInterval(messageInterval);
+                    };
+                } else {
+                    throw new Error(data.error || '비디오 URL을 가져올 수 없습니다.');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="text-red-600">오류: ${error.message}</p>`;
+                
+                // 폴백으로 플레이리스트 페이지를 iframe에 열기
+                iframe.src = 'https://tv.naver.com/sed.thumb?tab=playlist&playlistNo=972727';
+                iframe.onload = () => {
+                    loading.style.display = 'none';
+                    iframe.style.display = 'block';
+                    clearInterval(messageInterval);
+                };
+            }
+        });
+        
+        function closeVideoModal() {
+            const modal = document.getElementById('video-modal');
+            const iframe = document.getElementById('video-iframe');
+            
+            modal.classList.remove('active');
+            iframe.src = ''; // 비디오 정지
+            clearInterval(messageInterval);
+        }
+    </script>
+</body>
+</html>

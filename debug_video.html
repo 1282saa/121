@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Debug</title>
+    <style>
+        .log {
+            margin: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            font-family: monospace;
+        }
+        .error { color: red; }
+        .success { color: green; }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>비디오 디버그</h1>
+    
+    <button onclick="testDirectPlaylist()">1. 플레이리스트 직접 열기</button>
+    <button onclick="testServerEndpoint()">2. 서버 엔드포인트 테스트</button>
+    <button onclick="testPuppeteerDirect()">3. Puppeteer 직접 테스트</button>
+    
+    <div id="logs"></div>
+    
+    <script>
+        const logs = document.getElementById('logs');
+        
+        function addLog(message, isError = false) {
+            const log = document.createElement('div');
+            log.className = `log ${isError ? 'error' : 'success'}`;
+            log.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logs.insertBefore(log, logs.firstChild);
+        }
+        
+        function testDirectPlaylist() {
+            const url = 'https://tv.naver.com/sed.thumb?tab=playlist&playlistNo=972727';
+            addLog(`플레이리스트 직접 열기: ${url}`);
+            window.open(url, '_blank');
+        }
+        
+        async function testServerEndpoint() {
+            try {
+                addLog('서버 엔드포인트 테스트 시작...');
+                
+                const response = await fetch('/api/get-unboxing-video', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({})
+                });
+                
+                addLog(`응답 상태: ${response.status}`);
+                
+                const data = await response.json();
+                addLog(`응답 데이터: ${JSON.stringify(data)}`);
+                
+                if (data.success) {
+                    addLog(`비디오 URL: ${data.video_url}`);
+                    window.open(data.video_url, '_blank');
+                } else {
+                    addLog(`오류: ${data.error}`, true);
+                }
+                
+            } catch (error) {
+                addLog(`서버 테스트 실패: ${error.message}`, true);
+            }
+        }
+        
+        async function testPuppeteerDirect() {
+            try {
+                addLog('Puppeteer 직접 테스트 시작...');
+                
+                const response = await fetch('http://localhost:3001/api/get-unboxing-video', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({})
+                });
+                
+                const data = await response.json();
+                addLog(`Puppeteer 응답: ${JSON.stringify(data)}`);
+                
+                if (data.success) {
+                    addLog(`비디오 URL: ${data.url}`);
+                    window.open(data.url, '_blank');
+                } else {
+                    addLog(`Puppeteer 오류: ${data.error}`, true);
+                }
+                
+            } catch (error) {
+                addLog(`Puppeteer 테스트 실패 (서버가 실행중이지 않을 수 있음): ${error.message}`, true);
+            }
+        }
+    </script>
+</body>
+</html>

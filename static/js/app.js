@@ -8,6 +8,9 @@ document.addEventListener("DOMContentLoaded", function () {
   try {
     console.log("경제용 뉴스레터 애플리케이션 초기화 중...");
 
+    // 1면 언박싱 비디오 배너 설정
+    setupVideoBanner();
+
     // 콘텐츠 관리자 초기화
     if (window.ContentManager) {
       window.ContentManager.init();
@@ -690,4 +693,109 @@ function contains(selector, text) {
   return Array.prototype.filter.call(elements, function (element) {
     return RegExp(text).test(element.textContent);
   });
+}
+
+/**
+ * 1면 언박싱 비디오 배너 설정
+ */
+function setupVideoBanner() {
+  const videoBanner = document.getElementById('video-banner');
+  const videoModal = document.getElementById('video-modal');
+  const videoLoading = document.getElementById('video-loading');
+  const videoIframe = document.getElementById('video-iframe');
+  
+  if (!videoBanner) return;
+  
+  // 로딩 메시지 배열
+  const loadingMessages = [
+    "경제용이 1면을 준비하고 있어요! 🐲",
+    "오늘의 경제 뉴스를 가져오는 중... 📰",
+    "서울경제 1면의 비밀을 파헤치는 중! 🔍",
+    "거의 다 됐어요! 조금만 기다려주세요 ⏰",
+    "경제 상식이 올라가는 느낌이에요! 📈"
+  ];
+  
+  let messageIndex = 0;
+  let messageInterval;
+  
+  videoBanner.addEventListener('click', async () => {
+    console.log('Video banner clicked');
+    
+    // Show modal
+    videoModal.classList.add('active');
+    videoLoading.style.display = 'flex';
+    videoIframe.style.display = 'none';
+    
+    // 로딩 메시지 순환
+    const loadingMessageEl = document.querySelector('.loading-message');
+    messageInterval = setInterval(() => {
+      messageIndex = (messageIndex + 1) % loadingMessages.length;
+      loadingMessageEl.textContent = loadingMessages[messageIndex];
+      
+      // 애니메이션 재시작
+      loadingMessageEl.style.animation = 'none';
+      setTimeout(() => {
+        loadingMessageEl.style.animation = 'fadeInOut 3s ease-in-out';
+      }, 10);
+    }, 3000);
+    
+    try {
+      // Call server to get video URL
+      const response = await fetch('/api/get-unboxing-video', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({})
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to get video URL');
+      }
+      
+      const data = await response.json();
+      const videoUrl = data.video_url;
+      
+      if (videoUrl) {
+        console.log('Opening video in modal:', videoUrl);
+        
+        // iframe에 비디오 URL 설정
+        videoIframe.src = videoUrl;
+        
+        // 비디오가 로드되면 표시
+        videoIframe.onload = () => {
+          videoLoading.style.display = 'none';
+          videoIframe.style.display = 'block';
+          clearInterval(messageInterval);
+        };
+      } else {
+        console.error('No video URL received');
+        // 폴백으로 플레이리스트 페이지를 iframe에 열기
+        videoIframe.src = 'https://tv.naver.com/sed.thumb?tab=playlist&playlistNo=972727';
+        videoIframe.onload = () => {
+          videoLoading.style.display = 'none';
+          videoIframe.style.display = 'block';
+          clearInterval(messageInterval);
+        };
+      }
+    } catch (error) {
+      console.error('Error getting video:', error);
+      // 오류 시 플레이리스트 페이지를 iframe에 열기
+      videoIframe.src = 'https://tv.naver.com/sed.thumb?tab=playlist&playlistNo=972727';
+      videoIframe.onload = () => {
+        videoLoading.style.display = 'none';
+        videoIframe.style.display = 'block';
+        clearInterval(messageInterval);
+      };
+    }
+  });
+}
+
+// 비디오 모달 닫기 함수
+function closeVideoModal() {
+  const videoModal = document.getElementById('video-modal');
+  const videoIframe = document.getElementById('video-iframe');
+  
+  videoModal.classList.remove('active');
+  videoIframe.src = ''; // 비디오 정지
 }

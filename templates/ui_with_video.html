@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>경제용 뉴스레터 🐉</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        
+        /* 비디오 섹션 스타일 */
+        .video-section {
+            background-color: #fff8f0;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            border: 2px solid #fde68a;
+        }
+        
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 비율 */
+            height: 0;
+            overflow: hidden;
+            border-radius: 12px;
+            background-color: #000;
+        }
+        
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .video-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+        }
+        
+        .video-error {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #fde68a;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border-radius: 8px;
+        }
+        
+        /* 탭 스타일 수정 */
+        .tab-button {
+            @apply py-3 px-6 font-medium transition-all duration-300;
+            background: white;
+            color: #64748b;
+            border: 2px solid transparent;
+        }
+        
+        .tab-button.active {
+            color: #ff8c00;
+            background: #fff3e0;
+            border-color: #ff8c00;
+        }
+        
+        .tab-button:hover:not(.active) {
+            background: #fffbf5;
+            color: #ff8c00;
+        }
+        
+        /* 스크롤바 스타일 */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f3f4f6;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #fdba74;
+            border-radius: 4px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #f97316;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="max-w-7xl mx-auto p-6">
+        <!-- 헤더 -->
+        <header class="mb-8 text-center">
+            <div class="flex items-center justify-center mb-4">
+                <img src="https://img2.stibee.com/d2fad6b1-3012-4b5c-943a-3ca4c6a1b546.png" alt="경제용" class="w-24 h-24 rounded-full mr-4">
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-800">경제용<span class="text-orange-600"> 뉴스레터</span></h1>
+                    <p class="text-gray-600 mt-2">경제 소식을 쉽고 재미있게 전달해드려요! 🐉</p>
+                </div>
+            </div>
+            <div class="flex items-center justify-center space-x-2">
+                <img src="https://www.perplexity.ai/favicon.ico" alt="Perplexity" class="w-5 h-5">
+                <span class="text-lg font-semibold text-orange-600">Powered by Perplexity × 경제용</span>
+            </div>
+        </header>
+
+        <!-- 서울경제 1면 언박싱 비디오 섹션 -->
+        <div class="video-section">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">
+                    <span class="text-orange-600">서울경제</span> 1면 언박싱
+                </h2>
+                <div class="text-sm text-gray-600">
+                    오늘의 주요 뉴스를 영상으로 만나보세요
+                </div>
+            </div>
+            <div class="video-container" id="videoContainer">
+                <div class="video-loading" id="videoLoading">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4 mx-auto"></div>
+                    <p>영상을 불러오는 중이에요...</p>
+                </div>
+                <div class="video-error hidden" id="videoError">
+                    <p class="text-lg font-semibold mb-2">영상을 불러올 수 없어요 😢</p>
+                    <p class="text-sm">잠시 후 다시 시도해주세요</p>
+                </div>
+                <iframe id="unboxingVideo" class="hidden" allowfullscreen></iframe>
+            </div>
+        </div>
+
+        <!-- 탭 네비게이션 -->
+        <div class="bg-white rounded-t-2xl shadow-lg">
+            <nav class="flex border-b border-gray-200">
+                <button id="tab-chatbot" class="tab-button active flex-1 rounded-tl-2xl" onclick="switchTab('chatbot')">
+                    <span class="flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+                        </svg>
+                        AI 검색
+                    </span>
+                </button>
+                <button id="tab-terms" class="tab-button flex-1" onclick="switchTab('terms')">
+                    <span class="flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                        경제 용어
+                    </span>
+                </button>
+                <button id="tab-contents" class="tab-button flex-1 rounded-tr-2xl" onclick="switchTab('contents')">
+                    <span class="flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+                        </svg>
+                        최신 콘텐츠
+                    </span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- 컨텐츠 영역 -->
+        <main id="chatbot-section" class="bg-white rounded-b-2xl shadow-lg p-6">
+            <!-- AI 고급 기능 상태 표시 -->
+            <div id="rag-status-container" class="mb-4 p-3 bg-gray-50 rounded-lg">
+                <div class="flex items-center justify-between">
+                    <span id="rag-status" class="text-sm font-medium text-gray-500">AI 고급 기능: 비활성화</span>
+                    <button id="init-rag-button" 
+                            class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm"
+                            onclick="initializeRagChatbot()">
+                        AI 고급 기능 활성화
+                    </button>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">AI 고급 기능을 활성화하면 모든 경제 용어와 콘텐츠를 학습하여 더 정확한 답변을 제공합니다.</p>
+            </div>
+            
+            <!-- 채팅 영역 -->
+            <div id="chat-container" class="h-[500px] flex flex-col">
+                <div id="chat-output" class="flex-1 overflow-y-auto p-4 bg-gray-50 rounded-lg custom-scrollbar">
+                    <!-- 웰컴 메시지 -->
+                    <div class="chat-bubble bot-bubble">
+                        <span class="font-semibold">경제용:</span> 안녕하세용! 경제용이에용! 🐉<br>경제와 금융에 대해 궁금한 점이 있으면 편하게 물어보세용!<br><br>💡 더 똑똑한 답변을 원하시면 위의 'AI 고급 기능 활성화' 버튼을 클릭해주세용!
+                    </div>
+                </div>
+                
+                <div class="mt-4 flex gap-2">
+                    <input type="text" id="chat-input" 
+                           class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-full focus:outline-none focus:border-orange-500"
+                           placeholder="질문을 입력하세요..." 
+                           onkeypress="if(event.key==='Enter') sendMessage()">
+                    <button onclick="sendMessage()" 
+                            class="px-6 py-3 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-colors font-medium">
+                        전송
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 추천 검색어 -->
+            <div class="mt-6">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3">추천 검색어</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="search-suggestion bg-orange-50 border-2 border-orange-200 rounded-lg p-3 cursor-pointer hover:bg-orange-100 transition-colors">
+                        <p class="text-orange-800 font-medium">경제 순환이란 무엇인가요?</p>
+                    </div>
+                    <div class="search-suggestion bg-orange-50 border-2 border-orange-200 rounded-lg p-3 cursor-pointer hover:bg-orange-100 transition-colors">
+                        <p class="text-orange-800 font-medium">주식 투자 시작하는 방법</p>
+                    </div>
+                    <div class="search-suggestion bg-orange-50 border-2 border-orange-200 rounded-lg p-3 cursor-pointer hover:bg-orange-100 transition-colors">
+                        <p class="text-orange-800 font-medium">ETF와 주식의 차이점</p>
+                    </div>
+                    <div class="search-suggestion bg-orange-50 border-2 border-orange-200 rounded-lg p-3 cursor-pointer hover:bg-orange-100 transition-colors">
+                        <p class="text-orange-800 font-medium">금리와 경제의 관계</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 경제 용어 섹션 -->
+        <main id="terms-section" class="bg-white rounded-b-2xl shadow-lg p-6 hidden">
+            <div class="mb-6">
+                <input type="text" id="terms-search" 
+                       class="w-full px-4 py-3 border-2 border-gray-300 rounded-full focus:outline-none focus:border-orange-500"
+                       placeholder="용어를 검색하세요...">
+            </div>
+            
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">경제 용어 사전</h2>
+                <select id="terms-sort" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500">
+                    <option value="newest">최신순</option>
+                    <option value="oldest">오래된순</option>
+                    <option value="title-asc">제목 가나다순</option>
+                    <option value="title-desc">제목 역순</option>
+                </select>
+            </div>
+            
+            <div id="terms-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- 경제 용어 카드들이 여기에 동적으로 추가됩니다 -->
+            </div>
+        </main>
+
+        <!-- 최신 콘텐츠 섹션 -->
+        <main id="contents-section" class="bg-white rounded-b-2xl shadow-lg p-6 hidden">
+            <div class="mb-6">
+                <input type="text" id="contents-search" 
+                       class="w-full px-4 py-3 border-2 border-gray-300 rounded-full focus:outline-none focus:border-orange-500"
+                       placeholder="콘텐츠를 검색하세요...">
+            </div>
+            
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">최신 콘텐츠</h2>
+                <select id="contents-sort" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-orange-500">
+                    <option value="newest">최신순</option>
+                    <option value="oldest">오래된순</option>
+                    <option value="title-asc">제목 가나다순</option>
+                    <option value="title-desc">제목 역순</option>
+                </select>
+            </div>
+            
+            <div id="contents-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- 최신 콘텐츠 카드들이 여기에 동적으로 추가됩니다 -->
+            </div>
+        </main>
+
+        <!-- 푸터 -->
+        <footer class="mt-12 text-center text-gray-600">
+            <div class="flex justify-center space-x-6 mb-4">
+                <a href="#" class="hover:text-orange-600 transition-colors">이용약관</a>
+                <a href="#" class="hover:text-orange-600 transition-colors">개인정보처리방침</a>
+                <a href="#" class="hover:text-orange-600 transition-colors">문의하기</a>
+            </div>
+            <p>&copy; 2025 경제용 뉴스레터. All rights reserved. 🐉</p>
+        </footer>
+    </div>
+
+    <!-- 모달 -->
+    <div id="content-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center h-full p-4">
+            <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                <div class="sticky top-0 bg-white border-b border-gray-200 p-4">
+                    <div class="flex justify-between items-center">
+                        <h2 id="modal-title" class="text-2xl font-bold text-gray-800"></h2>
+                        <button id="modal-close" class="text-gray-500 hover:text-gray-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <p id="modal-date" class="text-sm text-gray-600 mt-1"></p>
+                </div>
+                <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+                    <div id="modal-content-body" class="prose prose-lg max-w-none">
+                        <!-- 모달 내용이 여기에 표시됩니다 -->
+                    </div>
+                </div>
+                <div class="sticky bottom-0 bg-white border-t border-gray-200 p-4">
+                    <button id="modal-close-bottom" class="w-full px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">
+                        닫기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 스크립트 로드 순서 중요 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/content-manager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+    
+    <!-- 1면 언박싱 비디오 로드 스크립트 -->
+    <script>
+        // 1면 언박싱 비디오 로드 함수
+        function loadUnboxingVideo() {
+            const videoContainer = document.getElementById('videoContainer');
+            const videoLoading = document.getElementById('videoLoading');
+            const videoError = document.getElementById('videoError');
+            const unboxingVideo = document.getElementById('unboxingVideo');
+            
+            // 서버에 요청하여 최신 1면 언박싱 비디오 URL 가져오기
+            fetch('/api/get-unboxing-video', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    url: 'https://tv.naver.com/sed.thumb?tab=playlist&playlistNo=972727',
+                    xpath: '/html/body/div[1]/div[3]/div[2]/div/div[3]/div/div[1]/ul/li[1]/a'
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.url) {
+                    // URL에서 video ID 추출
+                    const videoId = data.url.match(/\/v\/(\d+)/)?.[1];
+                    if (videoId) {
+                        // 네이버 TV 임베드 URL 생성 (자동재생 포함)
+                        const embedUrl = `https://tv.naver.com/embed/${videoId}?autoPlay=true`;
+                        
+                        // iframe에 URL 설정
+                        unboxingVideo.src = embedUrl;
+                        
+                        // 로딩 숨기고 비디오 표시
+                        videoLoading.classList.add('hidden');
+                        unboxingVideo.classList.remove('hidden');
+                    } else {
+                        throw new Error('비디오 ID를 찾을 수 없습니다.');
+                    }
+                } else {
+                    throw new Error(data.error || '비디오를 찾을 수 없습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('언박싱 비디오 로드 실패:', error);
+                
+                // 실패 시 플레이리스트 페이지 임베드
+                const fallbackUrl = 'https://tv.naver.com/embed/sed?tab=playlist&playlistNo=972727';
+                unboxingVideo.src = fallbackUrl;
+                
+                // 로딩 숨기고 비디오 표시
+                videoLoading.classList.add('hidden');
+                unboxingVideo.classList.remove('hidden');
+            });
+        }
+        
+        // 페이지 로드 시 비디오 로드
+        window.addEventListener('DOMContentLoaded', () => {
+            // 약간의 지연 후 비디오 로드 (사용자 경험 개선)
+            setTimeout(loadUnboxingVideo, 1000);
+        });
+    </script>
+</body>
+</html>

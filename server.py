@@ -1,4 +1,4 @@
-from flask import Flask, send_from_directory, jsonify, render_template, request
+from flask import Flask, send_from_directory, jsonify, render_template, request, Response
 import os
 import logging
 from pathlib import Path
@@ -243,6 +243,76 @@ def query_chatbot():
         logger.error(f"챗봇 질의 처리 중 오류 발생: {str(e)}")
         return jsonify({'status': 'error', 'message': f'오류가 발생했습니다: {str(e)}'}), 500
 
+@app.route('/api/chatbot/stream', methods=['GET'])
+def stream_chatbot():
+    """스트리밍 챗봇 질의 API"""
+    global chatbot_ready
+    
+    query = request.args.get('query', '')
+    
+    if not query:
+        return 'data: ' + json.dumps({'type': 'error', 'message': '질문이 없습니다.'}) + '\n\n'
+    
+    if not chatbot_ready:
+        return 'data: ' + json.dumps({'type': 'error', 'message': '챗봇이 아직 초기화되지 않았습니다.'}) + '\n\n'
+    
+    def generate():
+        try:
+            # 1. 검색 시작 알림
+            yield f"data: {json.dumps({'type': 'searching', 'message': '🔍 관련 정보를 검색하고 있습니다...'})}\n\n"
+            time.sleep(0.5)
+            
+            # 2. 챗봇에 질의
+            chatbot = unified_chatbot.get_unified_chatbot_instance()
+            
+            # 3. 문서 검색 중 알림
+            yield f"data: {json.dumps({'type': 'processing', 'message': '📚 내부 문서를 확인하고 있습니다...'})}\n\n"
+            
+            # 실제 처리
+            result = chatbot.process_query(query)
+            
+            # 4. 웹 검색 중 알림 (웹 검색을 사용한 경우)
+            if result.get('sources_used', {}).get('web'):
+                yield f"data: {json.dumps({'type': 'processing', 'message': '🌐 실시간 웹 검색을 진행하고 있습니다...'})}\n\n"
+                time.sleep(0.5)
+            
+            # 5. 답변 생성 중 알림
+            yield f"data: {json.dumps({'type': 'generating', 'message': '💭 답변을 생성하고 있습니다...'})}\n\n"
+            time.sleep(0.3)
+            
+            # 6. 답변을 청크로 나누어 전송
+            answer = result.get('answer', '')
+            # 문장 단위로 분리
+            sentences = answer.replace('. ', '.|').split('|')
+            
+            for sentence in sentences:
+                if sentence.strip():
+                    # 각 문장을 단어 단위로 스트리밍
+                    words = sentence.split(' ')
+                    for i in range(0, len(words), 3):
+                        chunk = ' '.join(words[i:i+3])
+                        yield f"data: {json.dumps({'type': 'content', 'content': chunk + ' '})}\n\n"
+                        time.sleep(0.05)
+            
+            # 7. 인용 정보 전송
+            if result.get('citations'):
+                yield f"data: {json.dumps({'type': 'citations', 'citations': result['citations']})}\n\n"
+            
+            # 8. 사용된 소스 정보 전송
+            yield f"data: {json.dumps({'type': 'sources', 'sources_used': result.get('sources_used', {})})}\n\n"
+            
+            # 9. 완료 신호
+            yield f"data: {json.dumps({'type': 'done'})}\n\n"
+            
+        except Exception as e:
+            logger.error(f"스트리밍 중 오류: {str(e)}")
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+    
+    return Response(generate(), mimetype='text/event-stream', headers={
+        'Cache-Control': 'no-cache',
+        'X-Accel-Buffering': 'no'
+    })
+
 @app.route('/api/chatbot/reset', methods=['POST'])
 def reset_chatbot():
     """챗봇 재설정 API"""
@@ -271,6 +341,62 @@ def ai_search_status():
 def ai_search_initialize():
     """AI 검색 초기화 API (통합 챗봇 초기화와 동일)"""
     return initialize_chatbot()  # 동일한 로직 사용
+
+@app.route('/api/get-unboxing-video', methods=['POST'])
+def get_unboxing_video():
+    """서울경제 1면 언박싱 비디오 URL 가져오기"""
+    import requests
+    
+    logger.info("언박싱 비디오 요청 받음")
+    
+    try:
+        # JSON 데이터가 없어도 처리 가능하도록 수정
+        data = request.get_json(force=True, silent=True) or {}
+        
+        # Puppeteer 서버로 요청 전송
+        puppeteer_url = 'http://localhost:3001/api/get-unboxing-video'
+        
+        logger.info("Puppeteer 서버로 언박싱 비디오 요청")
+        
+        try:
+            # Puppeteer 서버가 실행 중인지 확인하고 요청
+            response = requests.post(puppeteer_url, json=data, timeout=30)
+            result = response.json()
+            
+            if result.get('success'):
+                logger.info(f"비디오 URL 획득 성공: {result.get('url')}")
+                return jsonify({
+                    'success': True,
+                    'video_url': result.get('url')
+                })
+            else:
+                logger.error(f"Puppeteer 서버 오류: {result.get('error')}")
+                return jsonify({
+                    'success': False,
+                    'error': result.get('error')
+                })
+                
+        except requests.exceptions.ConnectionError:
+            logger.warning("Puppeteer 서버가 실행되지 않음. 기본 URL 반환")
+            # Puppeteer 서버가 없을 때 기본 플레이리스트 URL 반환
+            return jsonify({
+                'success': True,
+                'video_url': 'https://tv.naver.com/sed.thumb?tab=playlist&playlistNo=972727'
+            })
+            
+        except requests.exceptions.Timeout:
+            logger.error("Puppeteer 서버 응답 시간 초과")
+            return jsonify({
+                'success': False,
+                'error': '서버 응답 시간 초과'
+            })
+            
+    except Exception as e:
+        logger.error(f"언박싱 비디오 가져오기 오류: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
 
 @app.route('/view/<source_type>/<filename>')
 def view_document(source_type, filename):
