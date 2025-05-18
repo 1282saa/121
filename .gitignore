@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 환경 변수
+.env
+
+# 로그 파일
+*.log
+
+# 벡터 데이터베이스
+chroma_db/
+
+# IDE 파일
+.vscode/
+.idea/
+.DS_Store
+
+# 데이터 백업 파일
+*.bak
+*.swp
+*.tmp 

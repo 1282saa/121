@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>하이브리드 챗봇 테스트</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 p-4">
+    <div class="max-w-2xl mx-auto">
+      <h1 class="text-2xl font-bold mb-4">하이브리드 챗봇 테스트</h1>
+
+      <div class="bg-white p-4 rounded-lg shadow mb-4">
+        <h2 class="font-bold mb-2">챗봇 상태</h2>
+        <div id="status" class="text-gray-600">확인 중...</div>
+        <button
+          id="init-btn"
+          class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          챗봇 초기화
+        </button>
+      </div>
+
+      <div class="bg-white p-4 rounded-lg shadow mb-4">
+        <h2 class="font-bold mb-2">테스트 질문</h2>
+        <input
+          id="query"
+          type="text"
+          placeholder="질문을 입력하세요"
+          class="w-full p-2 border rounded mb-2"
+        />
+        <button
+          id="send-btn"
+          class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+        >
+          질문하기
+        </button>
+      </div>
+
+      <div class="bg-white p-4 rounded-lg shadow">
+        <h2 class="font-bold mb-2">응답</h2>
+        <div id="response" class="whitespace-pre-wrap">
+          여기에 응답이 표시됩니다.
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // 상태 확인
+      async function checkStatus() {
+        try {
+          const response = await fetch("/api/chatbot/status");
+          const data = await response.json();
+          const statusEl = document.getElementById("status");
+
+          if (data.ready) {
+            statusEl.textContent = "✅ 챗봇 준비됨";
+            statusEl.className = "text-green-500";
+          } else if (data.initializing) {
+            statusEl.textContent = "🔄 초기화 중...";
+            statusEl.className = "text-yellow-500";
+          } else {
+            statusEl.textContent = "❌ 초기화 필요";
+            statusEl.className = "text-red-500";
+          }
+        } catch (error) {
+          console.error("상태 확인 오류:", error);
+        }
+      }
+
+      // 초기화
+      document
+        .getElementById("init-btn")
+        .addEventListener("click", async () => {
+          try {
+            const response = await fetch("/api/chatbot/initialize", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+            });
+            const data = await response.json();
+            alert(data.message);
+
+            // 상태 확인 주기적으로 실행
+            const interval = setInterval(async () => {
+              await checkStatus();
+              if ((await fetch("/api/chatbot/status")).json().ready) {
+                clearInterval(interval);
+              }
+            }, 5000);
+          } catch (error) {
+            console.error("초기화 오류:", error);
+          }
+        });
+
+      // 질문하기
+      document
+        .getElementById("send-btn")
+        .addEventListener("click", async () => {
+          const query = document.getElementById("query").value;
+          if (!query) return;
+
+          try {
+            const response = await fetch("/api/chatbot/query", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ query }),
+            });
+
+            const data = await response.json();
+            const responseEl = document.getElementById("response");
+
+            if (data.status === "success") {
+              let responseHtml = `<div class="font-bold mb-2">답변:</div>`;
+              responseHtml += `<div class="mb-4">${data.answer}</div>`;
+
+              if (data.sources) {
+                responseHtml += `<div class="font-bold mb-2">출처:</div>`;
+                responseHtml += `<div class="text-sm">`;
+
+                if (data.sources.type === "hybrid") {
+                  responseHtml += `<div class="text-green-600">🌐 실시간 웹 검색 + 내부 문서 결합</div>`;
+                } else if (data.sources.type === "rag_only") {
+                  responseHtml += `<div class="text-blue-600">📖 내부 문서 기반 답변</div>`;
+                }
+
+                if (data.sources.internal_docs) {
+                  responseHtml += `<div class="mt-2">내부 문서:</div>`;
+                  data.sources.internal_docs.forEach((doc) => {
+                    responseHtml += `<div>- ${doc.title} (${doc.source_type})</div>`;
+                  });
+                }
+
+                if (data.sources.web_search) {
+                  responseHtml += `<div class="mt-2 text-green-600">${data.sources.web_search}</div>`;
+                }
+
+                responseHtml += `</div>`;
+              }
+
+              responseEl.innerHTML = responseHtml;
+            } else {
+              responseEl.innerHTML = `<div class="text-red-500">오류: ${data.message}</div>`;
+            }
+          } catch (error) {
+            console.error("질문 오류:", error);
+            document.getElementById(
+              "response"
+            ).innerHTML = `<div class="text-red-500">오류: ${error.message}</div>`;
+          }
+        });
+
+      // 초기 상태 확인
+      checkStatus();
+      setInterval(checkStatus, 10000); // 10초마다 상태 확인
+    </script>
+  </body>
+</html>

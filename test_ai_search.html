@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>AI 검색 테스트</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="p-8">
+    <div class="max-w-2xl mx-auto">
+        <h1 class="text-2xl font-bold mb-4">AI 검색 테스트</h1>
+        
+        <div class="mb-4">
+            <button id="check-status" class="px-4 py-2 bg-blue-500 text-white rounded">
+                상태 확인
+            </button>
+            <button id="init-search" class="px-4 py-2 bg-green-500 text-white rounded">
+                초기화
+            </button>
+        </div>
+        
+        <div id="status" class="mb-4 p-4 bg-gray-100 rounded"></div>
+        
+        <div class="mb-4">
+            <input id="query" type="text" value="ETF란 무엇인가요?" 
+                   class="w-full p-2 border rounded">
+            <button id="search" class="px-4 py-2 bg-orange-500 text-white rounded mt-2">
+                검색
+            </button>
+        </div>
+        
+        <div id="result" class="p-4 bg-gray-50 rounded"></div>
+    </div>
+    
+    <script>
+        // 상태 확인
+        document.getElementById('check-status').addEventListener('click', async () => {
+            const response = await fetch('/api/ai-search/status');
+            const data = await response.json();
+            document.getElementById('status').innerHTML = `
+                <div>준비 상태: ${data.ready ? '✅ 준비됨' : '❌ 준비되지 않음'}</div>
+                <div>초기화 중: ${data.initializing ? '🔄 초기화 중' : '대기 중'}</div>
+            `;
+        });
+        
+        // 초기화
+        document.getElementById('init-search').addEventListener('click', async () => {
+            const response = await fetch('/api/ai-search/initialize', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+            alert(data.message);
+        });
+        
+        // 검색
+        document.getElementById('search').addEventListener('click', async () => {
+            const query = document.getElementById('query').value;
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.innerHTML = '검색 중...';
+            
+            try {
+                const response = await fetch('/api/ai-search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    let html = `<h3 class="font-bold mb-2">답변:</h3>`;
+                    html += `<div class="mb-4">${data.answer}</div>`;
+                    
+                    html += `<h3 class="font-bold mb-2">출처:</h3>`;
+                    data.citations.forEach(cite => {
+                        html += `<div class="mb-2 p-2 border rounded">`;
+                        html += `<div>[${cite.number}] ${cite.title}</div>`;
+                        html += `<div class="text-sm text-gray-600">${cite.content}</div>`;
+                        html += `<div class="text-xs text-blue-600">${cite.type}</div>`;
+                        html += `</div>`;
+                    });
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = `<div class="text-red-600">오류: ${data.message}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="text-red-600">오류: ${error.message}</div>`;
+            }
+        });
+        
+        // 페이지 로드시 상태 확인
+        document.getElementById('check-status').click();
+    </script>
+</body>
+</html>
