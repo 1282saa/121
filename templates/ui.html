@@ -18,6 +18,82 @@
       body {
         font-family: "Noto Sans KR", sans-serif;
       }
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+      .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 90%;
+        max-width: 800px;
+        max-height: 80vh;
+        overflow-y: auto;
+        border-radius: 10px;
+      }
+      .markdown-content h1,
+      .markdown-content h2,
+      .markdown-content h3 {
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+        font-weight: bold;
+      }
+      .markdown-content p {
+        margin-bottom: 1rem;
+      }
+      .markdown-content ul,
+      .markdown-content ol {
+        margin-bottom: 1rem;
+        margin-left: 2rem;
+      }
+      .dragon-character-image {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+      }
+      .chat-bubble {
+        margin-bottom: 12px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        max-width: 80%;
+      }
+      .user-bubble {
+        background-color: #fb923c;
+        color: white;
+        align-self: flex-end;
+      }
+      .bot-bubble {
+        background-color: #f3f4f6;
+        color: #1f2937;
+      }
+      .bot-bubble.sources-info {
+        background-color: #e0f2fe;
+        border: 1px solid #0284c7;
+      }
+      .bot-bubble.citations-info {
+        background-color: #fef3c7;
+        border: 1px solid #f59e0b;
+      }
+      .tab-button.active {
+        color: #fb923c;
+        border-bottom: 2px solid #fb923c;
+      }
+      .tab-button {
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+      }
+      .tab-button:hover {
+        color: #fb923c;
+      }
       .citation-link {
         color: #3b82f6;
         text-decoration: none;
@@ -170,48 +246,11 @@
       <!-- 대화 출력 영역 -->
       <div
         id="chat-output"
-        class="flex-grow h-96 overflow-y-auto p-4 space-y-2 border border-gray-200 rounded-lg bg-gray-50"
+        class="flex-grow h-96 overflow-y-auto p-4 space-y-2 border border-gray-200 rounded-lg bg-gray-50 flex flex-col"
       >
         <div class="chat-bubble bot-bubble">
           <span class="font-semibold">경제용:</span> 무엇이 궁금한가용? 경제
           관련 질문을 해보세용!
-        </div>
-      </div>
-
-      <!-- 검색 결과 영역 -->
-      <div id="search-results" class="hidden">
-        <!-- 로딩 상태 -->
-        <div id="loading-state" class="hidden">
-          <div class="bg-white rounded-lg shadow-sm p-6">
-            <div class="flex items-center gap-3">
-              <div
-                class="animate-spin rounded-full h-8 w-8 border-4 border-orange-500 border-t-transparent"
-              ></div>
-              <p class="text-gray-600">답변을 생성하고 있습니다...</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- 답변 영역 -->
-        <div id="answer-area" class="hidden">
-          <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <div class="flex items-start gap-3 mb-4">
-              <div class="p-2 bg-orange-100 rounded-lg">
-                <i class="fas fa-sparkles text-orange-600"></i>
-              </div>
-              <h3 class="text-lg font-medium">AI 요약</h3>
-            </div>
-            <div
-              id="answer-content"
-              class="answer-container text-gray-800"
-            ></div>
-          </div>
-
-          <!-- 출처 섹션 -->
-          <div id="sources-area" class="bg-white rounded-lg shadow-sm p-6">
-            <h3 class="text-lg font-medium mb-4">출처</h3>
-            <div id="sources-list" class="space-y-3"></div>
-          </div>
         </div>
       </div>
 
@@ -447,492 +486,5 @@
     <script src="static/js/chatbot.js"></script>
     <script src="static/js/content-manager.js"></script>
     <script src="static/js/app.js"></script>
-
-    <!-- 챗봇 섹션 업데이트 -->
-    <div id="chatbot-section" class="tab-content hidden">
-      <div class="p-4">
-        <h2 class="text-2xl font-bold mb-4">경제용 AI 검색</h2>
-
-        <!-- RAG 상태 및 초기화 버튼 -->
-        <div class="rag-status-container">
-          <div id="rag-status" class="text-gray-500">
-            AI 고급 기능: 비활성화
-          </div>
-          <button
-            id="init-rag-button"
-            class="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50"
-          >
-            AI 고급 기능 활성화
-          </button>
-        </div>
-
-        <!-- 추천 검색어 영역 -->
-        <div id="ai-suggested-searches" class="mt-4 mb-6">
-          <h3 class="text-lg font-medium mb-3">추천 검색어</h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div
-              class="search-suggestion bg-white p-3 rounded-lg cursor-pointer border hover:border-orange-200 shadow-sm"
-            >
-              <p class="text-gray-800">ETF란 무엇인가요?</p>
-            </div>
-            <div
-              class="search-suggestion bg-white p-3 rounded-lg cursor-pointer border hover:border-orange-200 shadow-sm"
-            >
-              <p class="text-gray-800">금리인상이 주식시장에 미치는 영향은?</p>
-            </div>
-            <div
-              class="search-suggestion bg-white p-3 rounded-lg cursor-pointer border hover:border-orange-200 shadow-sm"
-            >
-              <p class="text-gray-800">인플레이션 헤지 방법은 무엇인가요?</p>
-            </div>
-            <div
-              class="search-suggestion bg-white p-3 rounded-lg cursor-pointer border hover:border-orange-200 shadow-sm"
-            >
-              <p class="text-gray-800">요즘 주목받는 경제 이슈는 무엇인가요?</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="chat-container">
-          <div id="ai-chat-output" class="chat-output"></div>
-
-          <!-- 검색 결과 영역 -->
-          <div id="ai-search-results" class="hidden">
-            <!-- 로딩 상태 -->
-            <div
-              id="ai-loading-state"
-              class="bg-white rounded-lg shadow-sm p-4 mb-4 hidden"
-            >
-              <div class="flex items-center gap-3">
-                <div
-                  class="animate-spin rounded-full h-6 w-6 border-4 border-orange-500 border-t-transparent"
-                ></div>
-                <p class="text-gray-600">답변을 생성하고 있습니다...</p>
-              </div>
-            </div>
-
-            <!-- 답변 영역 -->
-            <div id="ai-answer-area" class="hidden">
-              <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
-                <div class="flex items-start gap-3 mb-3">
-                  <div class="p-2 bg-orange-100 rounded-lg">
-                    <i class="fas fa-lightbulb text-orange-600"></i>
-                  </div>
-                  <h3 class="text-lg font-medium">AI 요약</h3>
-                </div>
-                <div
-                  id="ai-answer-content"
-                  class="answer-container text-gray-800"
-                ></div>
-              </div>
-
-              <!-- 출처 섹션 -->
-              <div
-                id="ai-sources-area"
-                class="bg-white rounded-lg shadow-sm p-4 mb-4"
-              >
-                <h3 class="text-lg font-medium mb-3">출처</h3>
-                <div id="ai-sources-list" class="space-y-3"></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="chat-input-container mt-4">
-            <input
-              id="ai-chat-input"
-              type="text"
-              placeholder="경제 관련 질문을 입력하세요..."
-              class="flex-grow px-4 py-2 border rounded-l-md focus:outline-none w-full"
-            />
-            <button
-              id="ai-send-button"
-              class="px-4 py-2 bg-orange-500 text-white rounded-r-md hover:bg-orange-600 focus:outline-none"
-            >
-              검색
-            </button>
-          </div>
-        </div>
-
-        <div class="mt-4 text-sm text-gray-500">
-          <p>
-            💡 <strong>사용 팁:</strong> 경제 용어나 투자 방법에 대해
-            검색해보세요. AI 고급 기능을 활성화하면 더 정확한 답변을 받을 수
-            있습니다.
-          </p>
-          <p class="mt-2">
-            📚 <strong>예시 질문:</strong> "ETF가 무엇인가요?", "주식과 채권의
-            차이는?", "요즘 비트코인 상승 이유는?"
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- .env 파일 생성 안내 모달 -->
-    <div id="env-modal" class="modal hidden">
-      <div class="modal-content max-w-md">
-        <span class="close">&times;</span>
-        <h2 class="text-xl font-bold mb-4">API 키 설정 필요</h2>
-        <p class="mb-4">
-          RAG 챗봇을 사용하기 위해 OpenAI API 키가 필요합니다. 프로젝트 루트
-          디렉토리에 <code>.env</code> 파일을 생성하고 다음 내용을 추가해주세요:
-        </p>
-        <div class="bg-gray-100 p-3 rounded mb-4 font-mono">
-          OPENAI_API_KEY=your_api_key_here
-        </div>
-        <p class="text-sm text-gray-500">
-          API 키는
-          <a
-            href="https://platform.openai.com/account/api-keys"
-            target="_blank"
-            class="text-orange-500 hover:underline"
-            >OpenAI 웹사이트</a
-          >에서 발급받을 수 있습니다.
-        </p>
-        <button
-          id="close-env-modal"
-          class="mt-4 px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 focus:outline-none"
-        >
-          확인
-        </button>
-      </div>
-    </div>
-
-    <script>
-      // 전역 변수
-      let currentCitations = [];
-
-      // 탭 전환
-      document.querySelectorAll(".tab-button").forEach((button) => {
-        button.addEventListener("click", () => {
-          const targetTab = button.dataset.tab;
-
-          // 탭 버튼 스타일 업데이트
-          document.querySelectorAll(".tab-button").forEach((btn) => {
-            btn.classList.remove("text-blue-600", "font-medium");
-            btn.classList.add("text-gray-600");
-          });
-          button.classList.remove("text-gray-600");
-          button.classList.add("text-blue-600", "font-medium");
-
-          // 콘텐츠 전환
-          document.querySelectorAll(".tab-content").forEach((content) => {
-            content.classList.add("hidden");
-          });
-          document
-            .getElementById(`${targetTab}-section`)
-            .classList.remove("hidden");
-        });
-      });
-
-      // 검색 기능
-      async function performSearch(query) {
-        if (!query.trim()) return;
-
-        // UI 상태 변경
-        document.getElementById("suggested-searches").classList.add("hidden");
-        document.getElementById("search-results").classList.remove("hidden");
-        document.getElementById("loading-state").classList.remove("hidden");
-        document.getElementById("answer-area").classList.add("hidden");
-
-        try {
-          const response = await fetch("/api/ai-search", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ query }),
-          });
-
-          const result = await response.json();
-
-          if (result.status === "success") {
-            displayResults(result);
-          } else {
-            displayError(result.message);
-          }
-        } catch (error) {
-          displayError("검색 중 오류가 발생했습니다.");
-        }
-      }
-
-      // 결과 표시
-      function displayResults(result) {
-        document.getElementById("loading-state").classList.add("hidden");
-        document.getElementById("answer-area").classList.remove("hidden");
-
-        // 답변 표시 (각주 번호 포함)
-        const answerWithCitations = addCitationLinks(result.answer);
-        document.getElementById("answer-content").innerHTML =
-          marked.parse(answerWithCitations);
-
-        // 출처 표시
-        currentCitations = result.citations;
-        displaySources(result.citations);
-      }
-
-      // 각주 링크 추가
-      function addCitationLinks(text) {
-        // [1], [2] 형식의 각주를 클릭 가능한 링크로 변환
-        return text.replace(/\[(\d+)\]/g, (match, num) => {
-          return `<a href="#citation-${num}" class="citation-link" onclick="scrollToCitation(${num}); return false;">[${num}]</a>`;
-        });
-      }
-
-      // 출처 표시
-      function displaySources(citations) {
-        const sourcesContainer = document.getElementById("sources-list");
-        sourcesContainer.innerHTML = "";
-
-        citations.forEach((citation) => {
-          const sourceDiv = document.createElement("div");
-          sourceDiv.className =
-            "p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors";
-          sourceDiv.id = `citation-${citation.number}`;
-
-          if (citation.type === "internal") {
-            // 내부 문서 출처
-            sourceDiv.innerHTML = `
-              <div class="flex items-start gap-3">
-                <div class="text-gray-400">${citation.number}</div>
-                <div class="flex-1">
-                  <h4 class="font-medium text-gray-800">${citation.title}</h4>
-                  <p class="text-sm text-gray-600 mt-1">${citation.content}</p>
-                  <p class="text-xs text-blue-600 mt-2">
-                    경제용 ${
-                      citation.source_type === "economy_terms"
-                        ? "경제 용어"
-                        : "최신 콘텐츠"
-                    }
-                  </p>
-                </div>
-              </div>
-            `;
-
-            // 클릭 시 내부 문서로 이동
-            sourceDiv.addEventListener("click", () => {
-              openInternalDocument(citation.file_name, citation.source_type);
-            });
-          } else {
-            // 웹 검색 출처
-            sourceDiv.innerHTML = `
-              <div class="flex items-start gap-3">
-                <div class="text-gray-400">${citation.number}</div>
-                <div class="flex-1">
-                  <h4 class="font-medium text-gray-800">${citation.title}</h4>
-                  <p class="text-sm text-gray-600 mt-1">${citation.content}</p>
-                  <p class="text-xs text-green-600 mt-2">웹 검색 결과</p>
-                </div>
-              </div>
-            `;
-          }
-
-          sourcesContainer.appendChild(sourceDiv);
-        });
-      }
-
-      // 내부 문서 열기
-      function openInternalDocument(fileName, sourceType) {
-        // 경제용 탭 전환 및 모달 열기
-        if (window.parent && window.parent.ContentManager) {
-          // 해당 탭으로 전환
-          const tabId =
-            sourceType === "economy_terms" ? "tab-terms" : "tab-contents";
-          window.parent.document.getElementById(tabId).click();
-
-          // 모달 열기
-          window.parent.ContentManager.openContentModal(fileName, sourceType);
-        } else {
-          // 새 창에서 열기
-          window.open(`/view/${sourceType}/${fileName}`, "_blank");
-        }
-      }
-
-      // 각주로 스크롤
-      function scrollToCitation(num) {
-        const element = document.getElementById(`citation-${num}`);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "center" });
-          element.classList.add("bg-blue-50");
-          setTimeout(() => {
-            element.classList.remove("bg-blue-50");
-          }, 2000);
-        }
-      }
-
-      // 오류 표시
-      function displayError(message) {
-        document.getElementById("loading-state").classList.add("hidden");
-        document.getElementById("answer-area").classList.remove("hidden");
-        document.getElementById("answer-content").innerHTML = `
-          <div class="text-red-600">
-            <i class="fas fa-exclamation-circle"></i> ${message}
-          </div>
-        `;
-        document.getElementById("sources-area").classList.add("hidden");
-      }
-
-      // 이벤트 리스너 설정
-      document.getElementById("send-button").addEventListener("click", () => {
-        const query = document.getElementById("chat-input").value;
-        performSearch(query);
-      });
-
-      document.getElementById("chat-input").addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          const query = e.target.value;
-          performSearch(query);
-        }
-      });
-
-      // AI 검색 탭의 이벤트 리스너
-      document
-        .getElementById("ai-send-button")
-        .addEventListener("click", () => {
-          const query = document.getElementById("ai-chat-input").value;
-          performAISearch(query);
-        });
-
-      document
-        .getElementById("ai-chat-input")
-        .addEventListener("keydown", (e) => {
-          if (e.key === "Enter") {
-            const query = e.target.value;
-            performAISearch(query);
-          }
-        });
-
-      // AI 검색 기능
-      async function performAISearch(query) {
-        if (!query.trim()) return;
-
-        // UI 상태 변경
-        document
-          .getElementById("ai-suggested-searches")
-          .classList.add("hidden");
-        document.getElementById("ai-search-results").classList.remove("hidden");
-        document.getElementById("ai-loading-state").classList.remove("hidden");
-        document.getElementById("ai-answer-area").classList.add("hidden");
-
-        try {
-          const response = await fetch("/api/ai-search", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ query }),
-          });
-
-          const result = await response.json();
-
-          if (result.status === "success") {
-            displayAIResults(result);
-          } else {
-            displayAIError(result.message);
-          }
-        } catch (error) {
-          displayAIError("검색 중 오류가 발생했습니다.");
-        }
-      }
-
-      // AI 검색 결과 표시
-      function displayAIResults(result) {
-        document.getElementById("ai-loading-state").classList.add("hidden");
-        document.getElementById("ai-answer-area").classList.remove("hidden");
-
-        // 답변 표시 (각주 번호 포함)
-        const answerWithCitations = addCitationLinks(result.answer);
-        document.getElementById("ai-answer-content").innerHTML =
-          marked.parse(answerWithCitations);
-
-        // 출처 표시
-        displayAISources(result.citations);
-      }
-
-      // AI 검색 오류 표시
-      function displayAIError(message) {
-        document.getElementById("ai-loading-state").classList.add("hidden");
-        document.getElementById("ai-answer-area").classList.remove("hidden");
-        document.getElementById("ai-answer-content").innerHTML = `
-          <div class="text-red-600">
-            <i class="fas fa-exclamation-circle"></i> ${message}
-          </div>
-        `;
-        document.getElementById("ai-sources-area").classList.add("hidden");
-      }
-
-      // AI 검색 출처 표시
-      function displayAISources(citations) {
-        const sourcesContainer = document.getElementById("ai-sources-list");
-        sourcesContainer.innerHTML = "";
-
-        citations.forEach((citation) => {
-          const sourceDiv = document.createElement("div");
-          sourceDiv.className =
-            "p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors";
-          sourceDiv.id = `ai-citation-${citation.number}`;
-
-          if (citation.type === "internal") {
-            // 내부 문서 출처
-            sourceDiv.innerHTML = `
-              <div class="flex items-start gap-3">
-                <div class="text-gray-400">${citation.number}</div>
-                <div class="flex-1">
-                  <h4 class="font-medium text-gray-800">${citation.title}</h4>
-                  <p class="text-sm text-gray-600 mt-1">${citation.content}</p>
-                  <p class="text-xs text-blue-600 mt-2">
-                    경제용 ${
-                      citation.source_type === "economy_terms"
-                        ? "경제 용어"
-                        : "최신 콘텐츠"
-                    }
-                  </p>
-                </div>
-              </div>
-            `;
-
-            // 클릭 시 내부 문서로 이동
-            sourceDiv.addEventListener("click", () => {
-              openInternalDocument(citation.file_name, citation.source_type);
-            });
-          } else {
-            // 웹 검색 출처
-            sourceDiv.innerHTML = `
-              <div class="flex items-start gap-3">
-                <div class="text-gray-400">${citation.number}</div>
-                <div class="flex-1">
-                  <h4 class="font-medium text-gray-800">${citation.title}</h4>
-                  <p class="text-sm text-gray-600 mt-1">${citation.content}</p>
-                  <p class="text-xs text-green-600 mt-2">웹 검색 결과</p>
-                </div>
-              </div>
-            `;
-          }
-
-          sourcesContainer.appendChild(sourceDiv);
-        });
-      }
-
-      // AI 추천 검색어 클릭
-      document.querySelectorAll(".search-suggestion").forEach((suggestion) => {
-        suggestion.addEventListener("click", () => {
-          const query = suggestion.querySelector("p").textContent;
-
-          // 현재 활성화된 탭에 따라 입력 필드 설정
-          const isMainTab = !document
-            .getElementById("chatbot-section")
-            .classList.contains("hidden");
-          const inputField = isMainTab
-            ? document.getElementById("chat-input")
-            : document.getElementById("ai-chat-input");
-          inputField.value = query;
-
-          if (isMainTab) {
-            performSearch(query);
-          } else {
-            performAISearch(query);
-          }
-        });
-      });
-    </script>
   </body>
 </html>

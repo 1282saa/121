@@ -94,6 +94,13 @@ window.Chatbot = (function () {
         isRagEnabled = data.ready;
         isRagInitializing = data.initializing;
         updateRagStatusUI();
+        
+        // 상세 상태 정보 표시
+        if (data.rag_initialized && data.perplexity_initialized) {
+          console.log("통합 챗봇 완전 활성화");
+        } else if (data.rag_initialized) {
+          console.log("RAG 활성화, 웹 검색 비활성화");
+        }
       })
       .catch((error) => {
         console.error("RAG 챗봇 상태 확인 오류:", error);
@@ -246,7 +253,7 @@ window.Chatbot = (function () {
   }
 
   /**
-   * RAG 챗봇 응답 처리
+   * RAG 챗봇 응답 처리 - 통합 챗봇 API 사용
    * @param {string} message - 사용자 메시지
    */
   function processRagChatbotResponse(message) {
@@ -265,15 +272,25 @@ window.Chatbot = (function () {
         // 타이핑 인디케이터 제거
         removeTypingIndicator(typingMessage);
 
-        if (data.status === "error") {
-          addMessageToChat("bot", `오류가 발생했어용: ${data.message}`);
+        if (data.error) {
+          addMessageToChat("bot", `오류가 발생했어용: ${data.error}`);
         } else {
           // 답변 메시지 추가
           addMessageToChat("bot", data.answer);
 
-          // 출처 정보 표시
-          if (data.sources) {
-            addSourcesToChat(data.sources);
+          // 출처 정보 표시 (통합 챗봇의 citations 형식)
+          if (data.citations && data.citations.length > 0) {
+            addCitationsToChat(data.citations);
+          }
+          
+          // 어떤 소스를 사용했는지 표시
+          if (data.sources_used) {
+            const sources = [];
+            if (data.sources_used.internal) sources.push("내부 문서");
+            if (data.sources_used.web) sources.push("실시간 웹 검색");
+            if (sources.length > 0) {
+              console.log(`사용된 소스: ${sources.join(", ")}`);
+            }
           }
         }
 
@@ -291,6 +308,67 @@ window.Chatbot = (function () {
         );
         isWaiting = false;
       });
+  }
+
+  /**
+   * 통합 챗봇의 출처 정보 추가
+   * @param {Array} citations - 출처 정보 배열
+   */
+  function addCitationsToChat(citations) {
+    if (!citations || citations.length === 0) return;
+
+    const chatOutput = document.getElementById("chat-output");
+
+    // 새 메시지 요소 생성
+    const messageDiv = document.createElement("div");
+    messageDiv.className = "chat-bubble bot-bubble citations-info";
+
+    // 출처 정보 HTML 생성
+    let citationsHtml = '<span class="font-semibold">📚 출처 정보:</span><br>';
+    
+    // 출처 분류
+    const internalCitations = citations.filter(c => c.type === "internal");
+    const webCitations = citations.filter(c => c.type === "web");
+    
+    // 내부 문서 출처
+    if (internalCitations.length > 0) {
+      citationsHtml += '<div class="mt-2"><strong>내부 문서:</strong></div>';
+      internalCitations.forEach((citation, index) => {
+        const docType = citation.source_type === "economy_terms" ? "경제 용어" : "최신 콘텐츠";
+        const tabId = citation.source_type === "economy_terms" ? "tab-terms" : "tab-contents";
+        
+        citationsHtml += `
+          <div class="citation-item ml-3">
+            <a href="#" class="text-blue-600 hover:underline" 
+               onclick="event.preventDefault(); document.getElementById('${tabId}').click(); window.ContentManager.openContentModal('${citation.file_name}', '${citation.source_type}');">
+              ${index + 1}. ${citation.title} (${docType})
+            </a>
+          </div>
+        `;
+      });
+    }
+    
+    // 웹 출처
+    if (webCitations.length > 0) {
+      citationsHtml += '<div class="mt-2"><strong>웹 검색 결과:</strong></div>';
+      webCitations.forEach((citation, index) => {
+        citationsHtml += `
+          <div class="citation-item ml-3">
+            <a href="${citation.url}" target="_blank" class="text-green-600 hover:underline">
+              ${internalCitations.length + index + 1}. ${citation.title} (${citation.source})
+            </a>
+          </div>
+        `;
+      });
+    }
+
+    messageDiv.innerHTML = citationsHtml;
+
+    // 채팅창에 추가
+    chatOutput.appendChild(messageDiv);
+
+    // 스크롤을 최신 메시지 위치로 이동
+    chatOutput.scrollTop = chatOutput.scrollHeight;
   }
 
   /**

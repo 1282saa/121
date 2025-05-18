@@ -7,10 +7,8 @@ import json
 import threading
 import time
 
-# RAG 챗봇 모듈 import
-import modules.rag_chatbot as rag_chatbot
-import modules.hybrid_chatbot as hybrid_chatbot
-import modules.ai_search as ai_search
+# 통합 챗봇 모듈 import
+import modules.unified_chatbot as unified_chatbot
 
 app = Flask(__name__)
 
@@ -46,27 +44,23 @@ os.makedirs('templates', exist_ok=True)
 chatbot_ready = False
 chatbot_initializing = False
 
-# AI 검색 초기화 상태
-ai_search_ready = False
-ai_search_initializing = False
-
-# 서버 시작 시 AI 검색 자동 초기화 함수
-def initialize_ai_search_at_startup():
-    global ai_search_ready, ai_search_initializing
+# 서버 시작 시 챗봇 자동 초기화 함수
+def initialize_chatbot_at_startup():
+    global chatbot_ready, chatbot_initializing
     try:
-        logger.info("서버 시작 시 AI 검색 자동 초기화 시작")
-        ai_search_initializing = True
-        success = ai_search.initialize_search_engine()
-        ai_search_ready = success
-        ai_search_initializing = False
-        logger.info(f"AI 검색 자동 초기화 완료: {success}")
+        logger.info("서버 시작 시 통합 챗봇 자동 초기화 시작")
+        chatbot_initializing = True
+        success = unified_chatbot.initialize_unified_chatbot()
+        chatbot_ready = success
+        chatbot_initializing = False
+        logger.info(f"통합 챗봇 자동 초기화 완료: {success}")
     except Exception as e:
-        logger.error(f"AI 검색 자동 초기화 중 오류 발생: {str(e)}")
-        ai_search_ready = False
-        ai_search_initializing = False
+        logger.error(f"통합 챗봇 자동 초기화 중 오류 발생: {str(e)}")
+        chatbot_ready = False
+        chatbot_initializing = False
 
-# 서버 시작 시 백그라운드에서 AI 검색 초기화 실행
-threading.Thread(target=initialize_ai_search_at_startup).start()
+# 서버 시작 시 백그라운드에서 챗봇 초기화 실행
+threading.Thread(target=initialize_chatbot_at_startup).start()
 
 # CORS 설정
 @app.after_request
@@ -78,10 +72,6 @@ def after_request(response):
 
 @app.route('/')
 def index():
-    return send_from_directory('templates', 'ui.html')
-
-@app.route('/ai-search')
-def ai_search_page():
     return send_from_directory('templates', 'ui.html')
 
 # 정적 파일 제공
@@ -99,6 +89,7 @@ def serve_css(filename):
     logger.info(f"CSS 파일 요청(레거시 경로): {filename}")
     return send_from_directory('static/css', filename)
 
+# API 엔드포인트들
 @app.route('/api/economy_terms')
 def get_economy_terms():
     """경제 용어 마크다운 파일 목록 반환"""
@@ -157,15 +148,27 @@ def get_recent_content(filename):
         logger.error(f"최신 콘텐츠 파일 로드 오류: {str(e)}")
         return str(e), 404
 
-# RAG 챗봇 API
+# 통합 챗봇 API
 @app.route('/api/chatbot/status')
 def chatbot_status():
     """챗봇 초기화 상태 확인"""
     global chatbot_ready, chatbot_initializing
-    return jsonify({
+    
+    status_info = {
         'ready': chatbot_ready,
         'initializing': chatbot_initializing
-    })
+    }
+    
+    if chatbot_ready:
+        # 챗봇 인스턴스에서 상세 상태 정보 가져오기
+        try:
+            chatbot = unified_chatbot.get_unified_chatbot_instance()
+            detailed_status = chatbot.get_status()
+            status_info.update(detailed_status)
+        except Exception as e:
+            logger.error(f"챗봇 상세 상태 조회 오류: {str(e)}")
+    
+    return jsonify(status_info)
 
 @app.route('/api/chatbot/initialize', methods=['POST'])
 def initialize_chatbot():
@@ -189,15 +192,14 @@ def initialize_chatbot():
     def init_chatbot_thread():
         global chatbot_ready, chatbot_initializing
         try:
-            logger.info("하이브리드 챗봇 초기화 시작")
+            logger.info("통합 챗봇 초기화 시작")
             chatbot_initializing = True
-            # 하이브리드 챗봇 초기화
-            success = hybrid_chatbot.initialize_hybrid_chatbot()
+            success = unified_chatbot.initialize_unified_chatbot()
             chatbot_ready = success
             chatbot_initializing = False
-            logger.info(f"하이브리드 챗봇 초기화 완료: {success}")
+            logger.info(f"통합 챗봇 초기화 완료: {success}")
         except Exception as e:
-            logger.error(f"하이브리드 챗봇 초기화 중 오류 발생: {str(e)}")
+            logger.error(f"통합 챗봇 초기화 중 오류 발생: {str(e)}")
             chatbot_ready = False
             chatbot_initializing = False
     
@@ -207,7 +209,7 @@ def initialize_chatbot():
 
 @app.route('/api/chatbot/query', methods=['POST'])
 def query_chatbot():
-    """챗봇 질의 API"""
+    """통합 챗봇 질의 API"""
     global chatbot_ready
     
     if not chatbot_ready:
@@ -224,16 +226,17 @@ def query_chatbot():
         if not query:
             return jsonify({'status': 'error', 'message': '질문이 없습니다.'}), 400
         
-        logger.info(f"챗봇 질의: {query}")
+        logger.info(f"통합 챗봇 질의: {query}")
         
-        # 하이브리드 챗봇 인스턴스로 질의 처리
-        chatbot = hybrid_chatbot.get_hybrid_chatbot_instance()
-        result = chatbot.get_answer(query)
+        # 통합 챗봇 인스턴스로 질의 처리
+        chatbot = unified_chatbot.get_unified_chatbot_instance()
+        result = chatbot.process_query(query)
         
         return jsonify({
             'status': 'success',
             'answer': result['answer'],
-            'sources': result['sources']
+            'citations': result['citations'],
+            'sources_used': result.get('sources_used', {})
         })
         
     except Exception as e:
@@ -249,94 +252,25 @@ def reset_chatbot():
     chatbot_initializing = False
     
     # 싱글톤 인스턴스 초기화
-    hybrid_chatbot._hybrid_chatbot_instance = None
+    unified_chatbot._unified_chatbot_instance = None
     
     return jsonify({'status': 'success', 'message': '챗봇이 재설정되었습니다.'})
 
-# AI 검색 API
+# AI 검색 API (통합 챗봇과 동일한 엔드포인트)
+@app.route('/api/ai-search', methods=['POST'])
+def ai_search():
+    """AI 검색 API (통합 챗봇 사용)"""
+    return query_chatbot()  # 동일한 로직 사용
+
 @app.route('/api/ai-search/status')
 def ai_search_status():
-    """AI 검색 초기화 상태 확인"""
-    global ai_search_ready, ai_search_initializing
-    return jsonify({
-        'ready': ai_search_ready,
-        'initializing': ai_search_initializing
-    })
+    """AI 검색 상태 API (통합 챗봇 상태와 동일)"""
+    return chatbot_status()  # 동일한 로직 사용
 
 @app.route('/api/ai-search/initialize', methods=['POST'])
-def initialize_ai_search():
-    """AI 검색 초기화"""
-    global ai_search_ready, ai_search_initializing
-    
-    if ai_search_ready:
-        return jsonify({'status': 'success', 'message': 'AI 검색이 이미 초기화되어 있습니다.'})
-    
-    if ai_search_initializing:
-        return jsonify({'status': 'pending', 'message': 'AI 검색이 초기화 중입니다.'})
-    
-    # API 키 검증
-    if not os.getenv('OPENAI_API_KEY'):
-        return jsonify({
-            'status': 'error',
-            'message': 'OpenAI API 키가 설정되지 않았습니다.'
-        }), 400
-    
-    # 백그라운드 스레드에서 초기화 실행
-    def init_ai_search_thread():
-        global ai_search_ready, ai_search_initializing
-        try:
-            logger.info("AI 검색 초기화 시작")
-            ai_search_initializing = True
-            success = ai_search.initialize_search_engine()
-            ai_search_ready = success
-            ai_search_initializing = False
-            logger.info(f"AI 검색 초기화 완료: {success}")
-        except Exception as e:
-            logger.error(f"AI 검색 초기화 중 오류 발생: {str(e)}")
-            ai_search_ready = False
-            ai_search_initializing = False
-    
-    threading.Thread(target=init_ai_search_thread).start()
-    
-    return jsonify({'status': 'initializing', 'message': 'AI 검색 초기화가 시작되었습니다.'})
-
-@app.route('/api/ai-search', methods=['POST'])
-def ai_search_query():
-    """AI 검색 실행"""
-    global ai_search_ready
-    
-    if not ai_search_ready:
-        # 자동 초기화 시도
-        if not ai_search_initializing:
-            initialize_ai_search()
-        
-        return jsonify({
-            'status': 'error',
-            'message': 'AI 검색이 초기화 중입니다. 잠시 후 다시 시도해주세요.'
-        }), 503
-    
-    try:
-        data = request.get_json()
-        query = data.get('query', '')
-        
-        if not query:
-            return jsonify({'status': 'error', 'message': '검색어가 없습니다.'}), 400
-        
-        logger.info(f"AI 검색 쿼리: {query}")
-        
-        # AI 검색 실행
-        search_engine = ai_search.get_search_instance()
-        result = search_engine.search(query)
-        
-        return jsonify({
-            'status': 'success',
-            'answer': result['answer'],
-            'citations': result['citations']
-        })
-        
-    except Exception as e:
-        logger.error(f"AI 검색 처리 중 오류 발생: {str(e)}")
-        return jsonify({'status': 'error', 'message': f'오류가 발생했습니다: {str(e)}'}), 500
+def ai_search_initialize():
+    """AI 검색 초기화 API (통합 챗봇 초기화와 동일)"""
+    return initialize_chatbot()  # 동일한 로직 사용
 
 @app.route('/view/<source_type>/<filename>')
 def view_document(source_type, filename):
@@ -379,6 +313,31 @@ def view_document(source_type, filename):
         logger.error(f"문서 조회 오류: {str(e)}")
         return f"문서를 찾을 수 없습니다: {filename}", 404
 
+# 환경 변수 확인 API
+@app.route('/api/env/check')
+def check_environment():
+    """환경 변수 설정 상태 확인"""
+    env_status = {
+        'openai_api_key': bool(os.getenv('OPENAI_API_KEY')),
+        'perplexity_api_key': bool(os.getenv('PERPLEXITY_API_KEY')),
+        'required_keys': ['OPENAI_API_KEY', 'PERPLEXITY_API_KEY'],
+        'missing_keys': []
+    }
+    
+    for key in env_status['required_keys']:
+        if not os.getenv(key):
+            env_status['missing_keys'].append(key)
+    
+    return jsonify(env_status)
+
 if __name__ == '__main__':
-    logger.info("서버 시작")
-    app.run(host='127.0.0.1', port=5000, debug=True)
+    logger.info("통합 경제용 챗봇 서버 시작")
+    
+    # 환경 변수 확인 (Flask 컨텍스트 밖에서 직접 확인)
+    env_status = {
+        'openai_api_key': bool(os.getenv('OPENAI_API_KEY')),
+        'perplexity_api_key': bool(os.getenv('PERPLEXITY_API_KEY'))
+    }
+    logger.info(f"환경 변수 상태: {env_status}")
+    
+    app.run(host='127.0.0.1', port=5000, debug=True) 

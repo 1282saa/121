@@ -1,6 +1,6 @@
 body {
   font-family: "Noto Sans KR", sans-serif;
-  background-color: #fff; /* 흰색 배경 */
+  @apply bg-gray-100;
 }
 .chat-bubble {
   max-width: 75%;
@@ -53,291 +53,170 @@ body {
 
 /* 콘텐츠 카드 스타일 */
 .content-card {
-  transition: all 0.3s ease;
-  cursor: pointer;
-  overflow: hidden;
+  @apply bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 ease-in-out hover:shadow-xl flex flex-col;
 }
 
-.content-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+.card-number-badge {
+  @apply absolute top-3 right-3 bg-indigo-500 text-white text-xs font-semibold px-2.5 py-1 rounded-full;
+}
+
+.card-content {
+  @apply p-5 flex-grow;
+}
+
+.card-title {
+  @apply text-lg font-semibold text-gray-800 mb-2 leading-tight;
+}
+
+.card-summary {
+  @apply text-sm text-gray-600 mb-3 flex-grow;
+}
+
+.card-footer {
+  @apply px-5 py-3 bg-gray-50 border-t border-gray-200;
+}
+
+.card-link {
+  @apply text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors;
 }
 
 /* 탭 스타일 */
 .tab-button {
-  position: relative;
+  @apply py-3 px-4 text-center font-medium transition-colors duration-150 ease-in-out;
 }
 
-.tab-button.active {
-  color: #ff8c00;
-  font-weight: bold;
+.active-tab {
+  @apply text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50;
 }
 
-.tab-button.active::after {
-  content: "";
-  position: absolute;
-  bottom: -5px; /* Adjusted for better visual */
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background-color: #ff8c00;
-  border-radius: 3px;
+.tab-button:not(.active-tab) {
+  @apply text-gray-500 hover:text-gray-700 hover:bg-gray-100;
+}
+
+/* 탭 컨텐츠 페인 */
+.tab-pane {
+  @apply hidden;
+}
+
+.active-pane {
+  @apply block;
 }
 
 /* 모달 스타일 */
-.modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 50;
-  overflow-y: auto;
-  padding: 0 1rem;
+#modal {
+  @apply fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50;
 }
 
-.modal-content {
-  max-width: 90%;
-  width: 800px;
-  margin: 2rem auto;
-  background-color: white;
-  border-radius: 0.5rem;
-  padding: 1.5rem 2rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  max-height: 85vh;
-  overflow-y: auto;
+#modal-body .prose h1,
+#modal-body .prose h2,
+#modal-body .prose h3,
+#modal-body .prose h4,
+#modal-body .prose strong {
+  @apply text-gray-800;
 }
 
-/* 모바일 화면에서 모달 크기 조절 */
-@media (max-width: 640px) {
-  .modal-content {
-    width: 95%;
-    padding: 1rem;
-    margin: 1rem auto;
-    max-height: 90vh;
+#modal-body .prose p {
+  @apply text-gray-700;
+}
+
+#modal-body .prose a {
+  @apply text-indigo-600 hover:text-indigo-700;
+}
+
+#modal-body .prose ul,
+#modal-body .prose ol {
+  @apply text-gray-700;
+}
+
+#modal-body .prose li::marker {
+  @apply text-indigo-500;
+}
+
+#modal-body .prose blockquote {
+  @apply border-l-4 border-indigo-500 bg-indigo-50 p-4 text-indigo-800;
+}
+
+#modal-body .prose code {
+  @apply bg-gray-200 text-gray-800 rounded px-1 py-0.5 text-sm;
+}
+
+#modal-body .prose pre {
+  @apply bg-gray-800 text-gray-100 rounded p-4 text-sm overflow-x-auto;
+}
+
+/* 챗봇 UI */
+#chat-window {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #a0aec0 #e2e8f0; /* Firefox: thumb track */
+}
+
+#chat-window::-webkit-scrollbar {
+  width: 8px;
+}
+
+#chat-window::-webkit-scrollbar-track {
+  background: #e2e8f0;
+  border-radius: 10px;
+}
+
+#chat-window::-webkit-scrollbar-thumb {
+  background-color: #a0aec0;
+  border-radius: 10px;
+  border: 2px solid #e2e8f0;
+}
+
+.user-message .message-bubble {
+  @apply bg-indigo-500 text-white ml-auto;
+}
+
+.bot-message .message-bubble {
+  @apply bg-gray-200 text-gray-800 mr-auto;
+}
+
+.message-bubble {
+  @apply p-3 rounded-lg max-w-xs sm:max-w-md lg:max-w-lg break-words shadow;
+}
+
+.message-container {
+  @apply flex flex-col mb-3;
+}
+
+.message-sender {
+  @apply text-xs text-gray-500 mb-0.5;
+}
+
+.user-message .message-sender {
+  @apply text-right mr-1;
+}
+
+.bot-message .message-sender {
+  @apply text-left ml-1;
+}
+
+.citation {
+  @apply inline-block bg-indigo-100 text-indigo-700 text-xs font-semibold mr-1 mb-1 px-2 py-0.5 rounded-full cursor-pointer hover:bg-indigo-200 transition-colors;
+}
+
+.citation-details {
+  @apply mt-2 p-3 bg-gray-100 border border-gray-200 rounded-md text-xs;
+}
+
+/* 로딩 스피너 */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
-
-/* 마크다운 내용 스타일 */
-.markdown-content h1 {
-  font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
-  color: #ff8c00;
+.fa-spinner {
+  animation: spin 1s linear infinite;
 }
 
-.markdown-content h2,
-.markdown-content h3,
-.markdown-content h4 {
-  font-weight: bold;
-  margin-top: 1.5rem;
-  margin-bottom: 0.75rem;
+/* 검색 결과 없음 메시지 */
+#no-results-message i {
+  @apply text-gray-400;
 }
 
-.markdown-content h2 {
-  font-size: 1.5rem;
-  color: #ff8c00;
-}
-
-.markdown-content h3 {
-  font-size: 1.25rem;
-}
-
-.markdown-content h4 {
-  font-size: 1.125rem;
-}
-
-.markdown-content p {
-  margin-bottom: 1rem;
-  line-height: 1.7;
-}
-
-.markdown-content ul,
-.markdown-content ol {
-  margin-bottom: 1rem;
-  padding-left: 1.5rem;
-}
-
-.markdown-content ul {
-  list-style-type: disc;
-}
-
-.markdown-content ol {
-  list-style-type: decimal;
-}
-
-.markdown-content li {
-  margin-bottom: 0.5rem;
-}
-
-.markdown-content blockquote {
-  border-left: 4px solid #ff8c00;
-  padding-left: 1rem;
-  margin-left: 0;
-  margin-right: 0;
-  font-style: italic;
-  color: #4b5563;
-}
-
-.markdown-content hr {
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
-  border: 0;
-  border-top: 1px solid #e5e7eb;
-}
-
-.markdown-content code {
-  background-color: #f3f4f6;
-  padding: 0.2rem 0.4rem;
-  border-radius: 0.25rem;
-  font-family: monospace;
-}
-
-.markdown-content pre {
-  background-color: #f3f4f6;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  overflow-x: auto;
-  margin-bottom: 1rem;
-}
-
-.markdown-content pre code {
-  background-color: transparent;
-  padding: 0;
-}
-
-.markdown-content img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 0.25rem;
-  margin-bottom: 1rem;
-}
-
-/* 챗봇 스타일 */
-.chat-container {
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - 280px);
-  min-height: 400px;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.chat-output {
-  flex-grow: 1;
-  overflow-y: auto;
-  padding: 1rem;
-  background-color: #f8f9fa;
-}
-
-.chat-input-container {
-  display: flex;
-  padding: 0.75rem;
-  background-color: white;
-  border-top: 1px solid #e9ecef;
-}
-
-.chat-bubble {
-  max-width: 80%;
-  padding: 0.75rem 1rem;
-  margin-bottom: 0.75rem;
-  border-radius: 1rem;
-  word-break: break-word;
-}
-
-.user-bubble {
-  background-color: #ff9800;
-  color: white;
-  border-top-right-radius: 0;
-}
-
-.bot-bubble {
-  background-color: white;
-  color: #333;
-  border: 1px solid #e9ecef;
-  border-top-left-radius: 0;
-}
-
-.typing-indicator .dots span {
-  opacity: 0;
-  animation: typing 1.4s infinite;
-  display: inline-block;
-}
-
-.typing-indicator .dots span:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.typing-indicator .dots span:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-@keyframes typing {
-  0% {
-    opacity: 0;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-.related-docs {
-  font-size: 0.9rem;
-  background-color: #f8f9fa;
-  border: 1px dashed #e9ecef;
-}
-
-.related-doc-item {
-  margin: 0.5rem 0;
-}
-
-/* 출처 정보 스타일 */
-.sources-info {
-  font-size: 0.9rem;
-  background-color: #f3f4f6;
-  border-left: 3px solid #3b82f6;
-  padding-left: 1rem;
-  margin-top: 0.5rem;
-}
-
-.sources-info .text-green-600 {
-  color: #059669;
-  font-weight: 500;
-}
-
-.sources-info .text-blue-600 {
-  color: #2563eb;
-  font-weight: 500;
-}
-
-.sources-info .text-gray-600 {
-  color: #4b5563;
-  font-style: italic;
-}
-
-.sources-info .related-doc-item a {
-  color: #ea580c;
-  text-decoration: none;
-}
-
-.sources-info .related-doc-item a:hover {
-  text-decoration: underline;
-}
-
-.rag-status-container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-  padding: 0.5rem;
-  background-color: #f8f9fa;
-  border-radius: 4px;
+/* tailwindcss prose 스타일 오버라이드 (필요시) */
+.prose {
+  @apply max-w-none;
 }

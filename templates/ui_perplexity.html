@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>경제용 AI 검색</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .citation-link {
+            color: #3b82f6;
+            text-decoration: none;
+            font-size: 0.75rem;
+            vertical-align: super;
+            margin: 0 2px;
+            cursor: pointer;
+        }
+        .citation-link:hover {
+            text-decoration: underline;
+        }
+        .search-suggestion {
+            transition: all 0.2s;
+        }
+        .search-suggestion:hover {
+            background-color: #f3f4f6;
+            transform: translateX(4px);
+        }
+        .answer-container {
+            line-height: 1.8;
+        }
+        .answer-container h2, .answer-container h3 {
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-weight: bold;
+        }
+        .answer-container p {
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 헤더 -->
+    <header class="bg-white border-b">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-8">
+                <h1 class="text-2xl font-bold text-gray-900">경제용</h1>
+                <nav class="hidden md:flex items-center gap-6">
+                    <button class="tab-button text-blue-600 font-medium" data-tab="ai-search">AI 검색</button>
+                    <button class="tab-button text-gray-600" data-tab="keyword-search">키워드 검색</button>
+                </nav>
+            </div>
+            <button class="p-2 text-gray-600">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- 메인 콘텐츠 -->
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        <!-- AI 검색 섹션 -->
+        <div id="ai-search-section" class="tab-content">
+            <!-- 검색 박스 -->
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+                <div class="flex items-center gap-4">
+                    <div class="relative flex-1">
+                        <input 
+                            id="search-input" 
+                            type="text" 
+                            placeholder="경제에 대해 무엇이든 물어보세요..."
+                            class="w-full px-4 py-3 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <button 
+                            id="search-button"
+                            class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-blue-600 hover:bg-blue-50 rounded"
+                        >
+                            <i class="fas fa-search text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 추천 검색어 -->
+            <div id="suggested-searches" class="mb-8">
+                <h3 class="text-lg font-medium mb-4">추천 AI 검색어</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="search-suggestion bg-white p-4 rounded-lg cursor-pointer border hover:border-blue-200">
+                        <p class="text-gray-800">ETF란 무엇인가요?</p>
+                    </div>
+                    <div class="search-suggestion bg-white p-4 rounded-lg cursor-pointer border hover:border-blue-200">
+                        <p class="text-gray-800">최근 코스피 지수 동향</p>
+                    </div>
+                    <div class="search-suggestion bg-white p-4 rounded-lg cursor-pointer border hover:border-blue-200">
+                        <p class="text-gray-800">금리 인상이 주식시장에 미치는 영향</p>
+                    </div>
+                    <div class="search-suggestion bg-white p-4 rounded-lg cursor-pointer border hover:border-blue-200">
+                        <p class="text-gray-800">안전한 투자 포트폴리오 구성법</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 검색 결과 영역 -->
+            <div id="search-results" class="hidden">
+                <!-- 로딩 상태 -->
+                <div id="loading-state" class="hidden">
+                    <div class="bg-white rounded-lg shadow-sm p-6">
+                        <div class="flex items-center gap-3">
+                            <div class="animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
+                            <p class="text-gray-600">답변을 생성하고 있습니다...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 답변 영역 -->
+                <div id="answer-area" class="hidden">
+                    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                        <div class="flex items-start gap-3 mb-4">
+                            <div class="p-2 bg-blue-100 rounded-lg">
+                                <i class="fas fa-sparkles text-blue-600"></i>
+                            </div>
+                            <h3 class="text-lg font-medium">AI 요약</h3>
+                        </div>
+                        <div id="answer-content" class="answer-container text-gray-800"></div>
+                    </div>
+
+                    <!-- 출처 섹션 -->
+                    <div id="sources-area" class="bg-white rounded-lg shadow-sm p-6">
+                        <h3 class="text-lg font-medium mb-4">출처</h3>
+                        <div id="sources-list" class="space-y-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 키워드 검색 섹션 (나중에 구현) -->
+        <div id="keyword-search-section" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <p class="text-gray-600">키워드 검색 기능은 준비 중입니다.</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // 전역 변수
+        let currentCitations = [];
+
+        // 탭 전환
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const targetTab = button.dataset.tab;
+                
+                // 탭 버튼 스타일 업데이트
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('text-blue-600', 'font-medium');
+                    btn.classList.add('text-gray-600');
+                });
+                button.classList.remove('text-gray-600');
+                button.classList.add('text-blue-600', 'font-medium');
+                
+                // 콘텐츠 전환
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                document.getElementById(`${targetTab}-section`).classList.remove('hidden');
+            });
+        });
+
+        // 검색 기능
+        async function performSearch(query) {
+            if (!query.trim()) return;
+
+            // UI 상태 변경
+            document.getElementById('suggested-searches').classList.add('hidden');
+            document.getElementById('search-results').classList.remove('hidden');
+            document.getElementById('loading-state').classList.remove('hidden');
+            document.getElementById('answer-area').classList.add('hidden');
+
+            try {
+                const response = await fetch('/api/ai-search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query })
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    displayResults(result);
+                } else {
+                    displayError(result.message);
+                }
+            } catch (error) {
+                displayError('검색 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 결과 표시
+        function displayResults(result) {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('answer-area').classList.remove('hidden');
+
+            // 답변 표시 (각주 번호 포함)
+            const answerWithCitations = addCitationLinks(result.answer);
+            document.getElementById('answer-content').innerHTML = marked.parse(answerWithCitations);
+
+            // 출처 표시
+            currentCitations = result.citations;
+            displaySources(result.citations);
+        }
+
+        // 각주 링크 추가
+        function addCitationLinks(text) {
+            // [1], [2] 형식의 각주를 클릭 가능한 링크로 변환
+            return text.replace(/\[(\d+)\]/g, (match, num) => {
+                return `<a href="#citation-${num}" class="citation-link" onclick="scrollToCitation(${num}); return false;">[${num}]</a>`;
+            });
+        }
+
+        // 출처 표시
+        function displaySources(citations) {
+            const sourcesContainer = document.getElementById('sources-list');
+            sourcesContainer.innerHTML = '';
+
+            citations.forEach(citation => {
+                const sourceDiv = document.createElement('div');
+                sourceDiv.className = 'p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors';
+                sourceDiv.id = `citation-${citation.number}`;
+
+                if (citation.type === 'internal') {
+                    // 내부 문서 출처
+                    sourceDiv.innerHTML = `
+                        <div class="flex items-start gap-3">
+                            <div class="text-gray-400">${citation.number}</div>
+                            <div class="flex-1">
+                                <h4 class="font-medium text-gray-800">${citation.title}</h4>
+                                <p class="text-sm text-gray-600 mt-1">${citation.content}</p>
+                                <p class="text-xs text-blue-600 mt-2">
+                                    경제용 ${citation.source_type === 'economy_terms' ? '경제 용어' : '최신 콘텐츠'}
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 클릭 시 내부 문서로 이동
+                    sourceDiv.addEventListener('click', () => {
+                        openInternalDocument(citation.file_name, citation.source_type);
+                    });
+                } else {
+                    // 웹 검색 출처
+                    sourceDiv.innerHTML = `
+                        <div class="flex items-start gap-3">
+                            <div class="text-gray-400">${citation.number}</div>
+                            <div class="flex-1">
+                                <h4 class="font-medium text-gray-800">${citation.title}</h4>
+                                <p class="text-sm text-gray-600 mt-1">${citation.content}</p>
+                                <p class="text-xs text-green-600 mt-2">웹 검색 결과</p>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                sourcesContainer.appendChild(sourceDiv);
+            });
+        }
+
+        // 내부 문서 열기
+        function openInternalDocument(fileName, sourceType) {
+            // 새 창에서 열기
+            window.open(`/view/${sourceType}/${fileName}`, '_blank');
+        }
+
+        // 각주로 스크롤
+        function scrollToCitation(num) {
+            const element = document.getElementById(`citation-${num}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                element.classList.add('bg-blue-50');
+                setTimeout(() => {
+                    element.classList.remove('bg-blue-50');
+                }, 2000);
+            }
+        }
+
+        // 오류 표시
+        function displayError(message) {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('answer-area').classList.remove('hidden');
+            document.getElementById('answer-content').innerHTML = `
+                <div class="text-red-600">
+                    <i class="fas fa-exclamation-circle"></i> ${message}
+                </div>
+            `;
+            document.getElementById('sources-area').classList.add('hidden');
+        }
+
+        // 이벤트 리스너 설정
+        document.getElementById('search-button').addEventListener('click', () => {
+            const query = document.getElementById('search-input').value;
+            performSearch(query);
+        });
+
+        document.getElementById('search-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const query = e.target.value;
+                performSearch(query);
+            }
+        });
+
+        // 추천 검색어 클릭
+        document.querySelectorAll('.search-suggestion').forEach(suggestion => {
+            suggestion.addEventListener('click', () => {
+                const query = suggestion.querySelector('p').textContent;
+                document.getElementById('search-input').value = query;
+                performSearch(query);
+            });
+        });
+    </script>
+</body>
+</html>
