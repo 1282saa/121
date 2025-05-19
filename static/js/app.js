@@ -740,7 +740,7 @@ function setupVideoBanner() {
     }, 3000);
     
     try {
-      // Call server to get video URL
+      // Call server to get video URL with autoplay
       const response = await fetch('/api/get-unboxing-video', {
         method: 'POST',
         headers: {
@@ -755,8 +755,38 @@ function setupVideoBanner() {
       
       const data = await response.json();
       const videoUrl = data.video_url;
+      const autoplay = data.autoplay;
       
-      if (videoUrl) {
+      if (data.success && data.autoplay) {
+        // Puppeteer가 자동재생을 처리한 경우
+        console.log('Autoplay initiated by Puppeteer');
+        // 짧은 메시지 표시 후 원래 플레이리스트로 바로 이동
+        videoIframe.src = videoUrl;
+        
+        // 잠시 대기 후 로딩 숨기기
+        setTimeout(() => {
+          videoLoading.style.display = 'none';
+          videoIframe.style.display = 'block';
+          clearInterval(messageInterval);
+          
+          // 재생 시작 안내 메시지
+          const playingMessage = document.createElement('div');
+          playingMessage.className = 'playing-message';
+          playingMessage.innerHTML = `
+            <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4">
+              <p class="font-bold">비디오가 자동으로 재생됩니다!</p>
+              <p class="text-sm">전체재생 버튼이 자동으로 클릭되었습니다.</p>
+            </div>
+          `;
+          videoModal.querySelector('.modal-body').prepend(playingMessage);
+          
+          // 3초 후 메시지 제거
+          setTimeout(() => {
+            playingMessage.remove();
+          }, 3000);
+        }, 1500);
+        
+      } else if (videoUrl) {
         console.log('Opening video in modal:', videoUrl);
         
         // iframe에 비디오 URL 설정
@@ -767,6 +797,22 @@ function setupVideoBanner() {
           videoLoading.style.display = 'none';
           videoIframe.style.display = 'block';
           clearInterval(messageInterval);
+          
+          // 수동 재생 안내 메시지
+          const manualPlayMessage = document.createElement('div');
+          manualPlayMessage.className = 'manual-play-message';
+          manualPlayMessage.innerHTML = `
+            <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4">
+              <p class="font-bold">전체재생 버튼을 클릭해주세요!</p>
+              <p class="text-sm">비디오가 로드되었습니다. 전체재생 버튼을 클릭하여 시청하세요.</p>
+            </div>
+          `;
+          videoModal.querySelector('.modal-body').prepend(manualPlayMessage);
+          
+          // 5초 후 메시지 제거
+          setTimeout(() => {
+            manualPlayMessage.remove();
+          }, 5000);
         };
       } else {
         console.error('No video URL received');

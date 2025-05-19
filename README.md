@@ -22,6 +22,7 @@
   - **실시간 웹 검색**: Perplexity API
   - **프레임워크**: LangChain
   - **검색 기법**: 하이브리드 검색 (Vector + Keyword)
+- **비디오 자동재생**: Puppeteer (Node.js)
 
 ## Railway 배포
 
@@ -64,6 +65,7 @@
 ### 사전 요구사항
 
 - Python 3.11 이상
+- Node.js 16 이상 (비디오 자동재생 기능용)
 - OpenAI API 키
 - Perplexity API 키
 
@@ -76,7 +78,7 @@
    cd economy-chatbot
    ```
 
-2. 가상환경 생성 및 활성화
+2. Python 가상환경 생성 및 활성화
 
    ```bash
    python -m venv venv
@@ -84,27 +86,47 @@
    venv\Scripts\activate     # Windows
    ```
 
-3. 의존성 설치
+3. Python 의존성 설치
 
    ```bash
    pip install -r requirements.txt
    ```
 
-4. 환경 변수 설정
+4. Node.js 의존성 설치 (비디오 자동재생 기능용)
+
+   ```bash
+   npm install
+   ```
+
+5. 환경 변수 설정
 
    ```bash
    cp .env.example .env
    # .env 파일을 열어 API 키 입력
    ```
 
-5. 서버 실행
+### 서버 실행
 
+#### 모든 기능 실행 (챗봇 + 비디오 자동재생)
+
+1. Puppeteer 서버 시작 (터미널 1):
    ```bash
-   python server.py
+   ./run_puppeteer.sh
    ```
 
-6. 웹 브라우저에서 접속
-   - http://localhost:5000
+2. Flask 서버 시작 (터미널 2):
+   ```bash
+   ./run_local.sh
+   ```
+
+#### Flask 서버만 실행 (비디오 자동재생 없음)
+
+```bash
+python server.py
+```
+
+### 웹 브라우저에서 접속
+- http://localhost:5000
 
 ## 프로젝트 구조
 

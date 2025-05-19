@@ -1,8 +1,14 @@
 [phases.setup]
-nixPkgs = ["...", "gcc", "binutils", "python311", "python311Packages.pip"]
+nixPkgs = ["python311", "python311Packages.pip", "gcc", "gcc-unwrapped", "glibc", "glibc.dev"]
 
 [phases.install]
-cmds = ["pip install --upgrade pip", "pip install -r requirements.txt"]
+cmds = [
+    "pip install --upgrade pip",
+    "pip install --no-cache-dir -r requirements.txt"
+]
 
 [start]
 cmd = "gunicorn server:app --bind 0.0.0.0:$PORT"
+
+[build]
+cacheDirectories = ["/root/.cache/pip"]
