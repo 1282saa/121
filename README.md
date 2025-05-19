@@ -2,6 +2,34 @@
 
 경제 용어와 최신 경제 콘텐츠를 AI 기반으로 검색하고 학습할 수 있는 웹 애플리케이션입니다.
 
+## 디렉토리 구조
+
+```
+.
+├── configs/          # 설정 파일
+│   ├── config.py
+│   ├── nixpacks.toml
+│   └── runtime.txt
+├── data/            # 데이터 파일
+│   ├── economy_terms/
+│   └── recent_contents_final/
+├── k8s/             # Kubernetes 배포 파일
+│   ├── deployment.yaml
+│   ├── service.yaml
+│   └── k8s-secret.yaml
+├── logs/            # 로그 파일
+├── modules/         # 챗봇 모듈
+├── scripts/         # 실행 스크립트
+│   ├── build_and_deploy.sh
+│   ├── run_local.sh
+│   ├── run_puppeteer.sh
+│   └── test_chatbot.py
+├── static/          # 정적 파일
+├── templates/       # HTML 템플릿
+├── server.py        # 메인 서버
+└── requirements.txt # Python 의존성
+```
+
 ## 주요 기능
 
 1. **AI 기반 경제 질문 답변**: 경제 용어와 콘텐츠를 기반으로 질문에 답변하는 AI 챗봇
@@ -96,32 +124,70 @@ docker run -p 8080:8080 --env-file .env economy-chatbot
 
 ## 배포
 
-### Railway 배포
+### GCP Kubernetes Engine 배포
 
-1. GitHub에 코드 푸시
+1. **사전 준비**
+   - GCP 프로젝트 설정
+   - gcloud CLI 설치 및 인증
+   - kubectl 설치
+   - Docker 설치
 
+2. **API 키 Secret 생성**
    ```bash
-   git init
-   git add .
-   git commit -m "Initial commit"
-   git remote add origin https://github.com/yourusername/economy-chatbot.git
-   git push -u origin main
+   # API 키를 base64로 인코딩
+   echo -n "your-openai-api-key" | base64
+   echo -n "your-perplexity-api-key" | base64
+   echo -n "your-flask-secret-key" | base64
+   
+   # k8s/k8s-secret.yaml 파일 수정 후 적용
+   kubectl apply -f k8s/k8s-secret.yaml
    ```
 
-2. Railway에서 새 프로젝트 생성
-   - railway.app 접속
-   - "New Project" 클릭
-   - "Deploy from GitHub repo" 선택
-   - GitHub 계정 연결 및 저장소 선택
+3. **자동 배포 스크립트 실행**
+   ```bash
+   ./scripts/build_and_deploy.sh
+   ```
 
-3. 환경 변수 설정
-   - Railway 프로젝트 설정에서 다음 변수 추가:
-     - `OPENAI_API_KEY`
-     - `PERPLEXITY_API_KEY`
-     - `SECRET_KEY`
+4. **수동 배포**
+   ```bash
+   # Docker 이미지 빌드
+   docker build -t chatbot:1.1 .
+   
+   # 이미지 태깅
+   docker tag chatbot:1.1 asia-northeast3-docker.pkg.dev/economydragon-chatbot/chatbot-repo/chatbot:1.1
+   
+   # 이미지 푸시
+   docker push asia-northeast3-docker.pkg.dev/economydragon-chatbot/chatbot-repo/chatbot:1.1
+   
+   # Kubernetes 배포
+   kubectl apply -f k8s/deployment.yaml
+   kubectl apply -f k8s/service.yaml
+   ```
 
-4. 자동 배포
-   - GitHub에 푸시하면 Railway가 자동으로 배포
+5. **배포 확인**
+   ```bash
+   # 포드 상태 확인
+   kubectl get pods
+   
+   # 서비스 상태 확인
+   kubectl get service
+   
+   # 로그 확인
+   kubectl logs -f deployment/chatbot-deploy
+   ```
+
+6. **트러블슈팅**
+   ```bash
+   # 포드 재시작
+   kubectl rollout restart deployment/chatbot-deploy
+   
+   # 포드 세부 정보
+   kubectl describe pod <pod-name>
+   
+   # 이전 버전으로 롤백
+   kubectl rollout undo deployment/chatbot-deploy
+   ```
+
 
 ### Heroku 배포
 

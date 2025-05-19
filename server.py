@@ -6,6 +6,13 @@ import mimetypes
 import json
 import threading
 import time
+import sys
+
+# 프로젝트 루트를 Python 경로에 추가
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+# 설정 파일 import
+from configs.config import Config
 
 # 통합 챗봇 모듈 import
 import modules.unified_chatbot as unified_chatbot
@@ -76,6 +83,11 @@ def after_request(response):
 @app.route('/')
 def index():
     return send_from_directory('templates', 'ui.html')
+
+@app.route('/health')
+def health():
+    """Health check endpoint for monitoring"""
+    return jsonify({"status": "healthy", "timestamp": time.time()})
 
 # 정적 파일 제공
 @app.route('/static/<path:path>')
@@ -356,12 +368,11 @@ def get_unboxing_video():
         # JSON 데이터가 없어도 처리 가능하도록 수정
         data = request.get_json(force=True, silent=True) or {}
         
-        # 로컬 환경에서는 항상 Puppeteer 사용
-        is_local = not os.environ.get('RAILWAY_ENVIRONMENT')
-        use_puppeteer = is_local or os.environ.get('USE_PUPPETEER', 'true').lower() == 'true'
+        # Puppeteer 사용 여부 확인
+        use_puppeteer = os.environ.get('USE_PUPPETEER', 'true').lower() == 'true'
         puppeteer_url = os.environ.get('PUPPETEER_URL', 'http://localhost:3001/api/get-unboxing-video')
         
-        logger.info(f"환경: {'로컬' if is_local else '프로덕션'}")
+        logger.info(f"환경: {os.environ.get('ENVIRONMENT', '프로덕션')}")
         logger.info(f"Puppeteer 사용: {use_puppeteer}")
         
         try:
@@ -375,6 +386,7 @@ def get_unboxing_video():
                     logger.info(f"비디오 URL 획득 성공: {result.get('url')}")
                     return jsonify({
                         'success': True,
+                        'url': result.get('url'),
                         'video_url': result.get('url'),
                         'autoplay': result.get('autoplay', False)
                     })
@@ -383,11 +395,12 @@ def get_unboxing_video():
                     # 오류 시에도 기본 URL 반환
                     return jsonify({
                         'success': True,
+                        'url': 'https://tv.naver.com/sed.thumb?tab=playlist&playlistNo=972727',
                         'video_url': 'https://tv.naver.com/sed.thumb?tab=playlist&playlistNo=972727',
                         'autoplay': False
                     })
             else:
-                # Railway에서는 Puppeteer 사용 안함
+                # Puppeteer 사용 안함
                 raise requests.exceptions.ConnectionError("Puppeteer disabled")
                 
         except requests.exceptions.ConnectionError:
@@ -395,6 +408,7 @@ def get_unboxing_video():
             # Puppeteer 서버가 없을 때 기본 플레이리스트 URL 반환
             return jsonify({
                 'success': True,
+                'url': 'https://tv.naver.com/sed.thumb?tab=playlist&playlistNo=972727',
                 'video_url': 'https://tv.naver.com/sed.thumb?tab=playlist&playlistNo=972727',
                 'autoplay': False
             })
@@ -403,6 +417,7 @@ def get_unboxing_video():
             logger.error("Puppeteer 서버 응답 시간 초과")
             return jsonify({
                 'success': True,
+                'url': 'https://tv.naver.com/sed.thumb?tab=playlist&playlistNo=972727',
                 'video_url': 'https://tv.naver.com/sed.thumb?tab=playlist&playlistNo=972727',
                 'autoplay': False
             })
@@ -411,6 +426,7 @@ def get_unboxing_video():
         logger.error(f"언박싱 비디오 가져오기 오류: {str(e)}")
         return jsonify({
             'success': True,
+            'url': 'https://tv.naver.com/sed.thumb?tab=playlist&playlistNo=972727',
             'video_url': 'https://tv.naver.com/sed.thumb?tab=playlist&playlistNo=972727',
             'autoplay': False
         })
@@ -483,11 +499,6 @@ if __name__ == '__main__':
     }
     logger.info(f"환경 변수 상태: {env_status}")
     
-    # 환경에 따라 다른 설정 사용
-    if os.environ.get('RAILWAY_ENVIRONMENT'):
-        # Railway 환경
-        port = int(os.environ.get('PORT', 5000))
-        app.run(host='0.0.0.0', port=port, debug=False)
-    else:
-        # 로컬 환경
-        app.run(host='127.0.0.1', port=5000, debug=True) 
+    # 서버 실행
+    port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', port=port, debug=False) 

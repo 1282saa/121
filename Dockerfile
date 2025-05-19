@@ -27,11 +27,9 @@ COPY . .
 # 데이터 디렉토리 생성
 RUN mkdir -p data/economy_terms data/recent_contents_final logs
 
-# Railway 환경 변수 설정
-ENV RAILWAY_ENVIRONMENT=production
+# 환경 변수 설정
+ENV ENVIRONMENT=production
 ENV PUPPETEER_ENABLED=FALSE
-
-# 포트 환경 변수 설정 (Railway에서 자동으로 설정)
 ENV PORT=8080
 
 # 애플리케이션 실행

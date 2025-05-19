@@ -8,6 +8,8 @@ class Config:
     DEBUG = os.environ.get('FLASK_ENV') == 'development'
     
     # API Keys
+    OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+    PERPLEXITY_API_KEY = os.environ.get('PERPLEXITY_API_KEY')
     ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
     
     # Paths

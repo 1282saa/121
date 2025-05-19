@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# 스크립트 디렉토리로부터 프로젝트 루트로 이동
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+cd "$PROJECT_ROOT"
+
 echo "경제용 챗봇 로컬 서버 시작..."
 
 # .env 파일 확인
