@@ -35,4 +35,4 @@ ENV PUPPETEER_ENABLED=FALSE
 ENV PORT=8080
 
 # 애플리케이션 실행
-CMD ["gunicorn", "server:app", "--bind", "0.0.0.0:$PORT", "--workers", "4", "--log-level", "info"]
+CMD exec gunicorn server:app --bind 0.0.0.0:$PORT --workers 4 --log-level info

@@ -18,35 +18,55 @@ ENV/
 .idea/
 *.swp
 *.swo
-
-# MacOS
 .DS_Store
 
-# 로그 파일
+# Logs
 logs/
 *.log
 
-# 테스트 파일
+# Test files
 test_*.py
+test_*.html
 *_test.py
+*_test.html
+TEST_GUIDE.md
 
-# 문서
+# Documentation
 README.md
 LICENSE
+*.md
 
-# Node.js (Puppeteer용 - Railway에서는 사용 안함)
+# Node.js (local development only)
 node_modules/
 package-lock.json
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# 로컬 실행 스크립트
+# Local scripts
 run_*.sh
 
-# 환경 변수 파일 (Railway에서는 별도 설정)
+# Environment files
 .env
-.env.example
+.env.*
+env.example
 
-# ChromaDB 데이터 (Railway에서는 새로 생성)
+# Database files (will be created at runtime)
 data/chroma_db/
+*.sqlite3
+*.db
+
+# Temporary files
+*.tmp
+*.bak
+*~
+server_log.txt
+rag_chatbot.log
+current_versions.txt
+requirements_old.txt
+
+# Railway/deployment specific
+.railway/
+railway.json
+Procfile
+nixpacks.toml

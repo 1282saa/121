@@ -24,16 +24,79 @@
   - **검색 기법**: 하이브리드 검색 (Vector + Keyword)
 - **비디오 자동재생**: Puppeteer (Node.js)
 
-## Railway 배포
+## 로컬 개발
 
 ### 사전 요구사항
 
-- GitHub 계정
-- Railway 계정
+- Python 3.11 이상
+- Node.js 16 이상 (비디오 자동재생 기능용)
 - OpenAI API 키
 - Perplexity API 키
 
-### 배포 단계
+### 설치 및 실행
+
+1. 저장소 클론
+
+   ```bash
+   git clone https://github.com/your-username/economy-chatbot.git
+   cd economy-chatbot
+   ```
+
+2. Python 가상환경 생성 및 활성화
+
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # Windows: venv\Scripts\activate
+   ```
+
+3. 의존성 설치
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Node.js 패키지 설치 (비디오 자동재생용)
+
+   ```bash
+   npm install
+   ```
+
+5. 환경 변수 설정
+
+   ```bash
+   cp env.example .env
+   # .env 파일을 열어 API 키 설정
+   ```
+
+6. 서버 실행
+
+   ```bash
+   # Python 서버
+   python server.py
+   
+   # 별도 터미널에서 Puppeteer 서버 (선택사항)
+   node puppeteer_server.js
+   ```
+
+7. 브라우저에서 http://localhost:5000 접속
+
+## Docker 사용
+
+### Docker 빌드
+
+```bash
+docker build -t economy-chatbot .
+```
+
+### Docker 실행
+
+```bash
+docker run -p 8080:8080 --env-file .env economy-chatbot
+```
+
+## 배포
+
+### Railway 배포
 
 1. GitHub에 코드 푸시
 
@@ -49,158 +112,77 @@
    - railway.app 접속
    - "New Project" 클릭
    - "Deploy from GitHub repo" 선택
-   - 저장소 선택
+   - GitHub 계정 연결 및 저장소 선택
 
-3. 환경 변수 설정 (Railway Dashboard)
-   - `OPENAI_API_KEY`: OpenAI API 키
-   - `PERPLEXITY_API_KEY`: Perplexity API 키
-   - `SECRET_KEY`: Flask 시크릿 키 (자동 생성 가능)
+3. 환경 변수 설정
+   - Railway 프로젝트 설정에서 다음 변수 추가:
+     - `OPENAI_API_KEY`
+     - `PERPLEXITY_API_KEY`
+     - `SECRET_KEY`
 
-4. 배포 시작
-   - Railway가 자동으로 빌드 및 배포 진행
-   - 배포 완료 후 제공된 URL로 접속
+4. 자동 배포
+   - GitHub에 푸시하면 Railway가 자동으로 배포
 
-## 로컬 개발
-
-### 사전 요구사항
-
-- Python 3.11 이상
-- Node.js 16 이상 (비디오 자동재생 기능용)
-- OpenAI API 키
-- Perplexity API 키
-
-### 설치 단계
-
-1. 저장소 클론
-
-   ```bash
-   git clone https://github.com/yourusername/economy-chatbot.git
-   cd economy-chatbot
-   ```
-
-2. Python 가상환경 생성 및 활성화
-
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # macOS/Linux
-   venv\Scripts\activate     # Windows
-   ```
-
-3. Python 의존성 설치
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. Node.js 의존성 설치 (비디오 자동재생 기능용)
-
-   ```bash
-   npm install
-   ```
-
-5. 환경 변수 설정
-
-   ```bash
-   cp .env.example .env
-   # .env 파일을 열어 API 키 입력
-   ```
-
-### 서버 실행
-
-#### 모든 기능 실행 (챗봇 + 비디오 자동재생)
-
-1. Puppeteer 서버 시작 (터미널 1):
-   ```bash
-   ./run_puppeteer.sh
-   ```
-
-2. Flask 서버 시작 (터미널 2):
-   ```bash
-   ./run_local.sh
-   ```
-
-#### Flask 서버만 실행 (비디오 자동재생 없음)
+### Heroku 배포
 
 ```bash
-python server.py
+# Heroku CLI 로그인
+heroku login
+
+# 새 앱 생성
+heroku create your-app-name
+
+# 환경 변수 설정
+heroku config:set OPENAI_API_KEY=your-api-key
+heroku config:set PERPLEXITY_API_KEY=your-api-key
+
+# 배포
+git push heroku main
 ```
 
-### 웹 브라우저에서 접속
-- http://localhost:5000
+## 환경 변수
+
+- `OPENAI_API_KEY`: OpenAI API 키 (필수)
+- `PERPLEXITY_API_KEY`: Perplexity API 키 (필수)
+- `SECRET_KEY`: Flask 시크릿 키 (보안용)
+- `USE_PUPPETEER`: 비디오 자동재생 사용 여부 (옵션)
 
 ## 프로젝트 구조
 
 ```
-경제용챗봇/
-├── static/                # 정적 파일들
-│   ├── css/               # CSS 파일들
-│   │   └── styles.css
-│   └── js/                # JavaScript 파일들
-│       ├── app.js
-│       ├── chatbot.js
-│       ├── content-data.js
-│       └── content-manager.js
-├── data/                  # 데이터 폴더
-│   ├── economy_terms/     # 경제 용어 마크다운 파일들
-│   └── recent_contents/   # 최신 콘텐츠 마크다운 파일들
-├── modules/               # Python 모듈 폴더
-│   └── rag_chatbot.py     # RAG 챗봇 클래스
-├── ui.html                # 메인 HTML 파일
+economy-chatbot/
 ├── server.py              # Flask 서버
-├── requirements.txt       # 의존성 패키지 목록
-├── .env.example           # 환경 변수 예시 파일
-├── .gitignore             # Git 무시 파일 목록
-└── README.md              # 프로젝트 README
+├── config.py              # 설정 파일
+├── requirements.txt       # Python 의존성
+├── package.json          # Node.js 의존성
+├── Dockerfile            # Docker 설정
+├── .env.example          # 환경 변수 예시
+├── modules/              # 백엔드 모듈
+│   └── unified_chatbot.py # 통합 챗봇 로직
+├── static/               # 정적 파일
+│   ├── css/             # 스타일시트
+│   └── js/              # JavaScript 파일
+├── templates/            # HTML 템플릿
+│   └── ui.html          # 메인 UI
+└── data/                # 데이터 파일
+    ├── economy_terms/   # 경제 용어
+    └── recent_contents_final/ # 최신 콘텐츠
 ```
 
-## RAG 챗봇 사용 방법
+## 라이선스
 
-1. 웹사이트 접속 후 '챗봇' 탭을 클릭하세요.
-2. 'AI 고급 기능 활성화' 버튼을 클릭하여 RAG 기능을 초기화하세요.
-   - 초기화는 몇 분 정도 소요될 수 있습니다.
-   - 초기화가 완료되면 '활성화' 상태로 변경됩니다.
-3. 챗봇에 경제, 투자, 금융 관련 질문을 입력하세요.
-4. 질문에 관련된 문서를 참조하여 정확한 답변을 제공합니다.
-5. 관련 문서 링크를 클릭하면 해당 문서 전체 내용을 확인할 수 있습니다.
+MIT License
 
-## API 엔드포인트
+## 기여
 
-| 엔드포인트                        | 메소드 | 설명                       |
-| --------------------------------- | ------ | -------------------------- |
-| `/api/economy_terms`              | GET    | 경제 용어 파일 목록 반환   |
-| `/api/recent_contents`            | GET    | 최신 콘텐츠 파일 목록 반환 |
-| `/api/economy_terms/<filename>`   | GET    | 특정 경제 용어 내용 반환   |
-| `/api/recent_contents/<filename>` | GET    | 특정 콘텐츠 내용 반환      |
-| `/api/chatbot/status`             | GET    | 챗봇 초기화 상태 확인      |
-| `/api/chatbot/initialize`         | POST   | 챗봇 초기화 요청           |
-| `/api/chatbot/query`              | POST   | 챗봇에 질의                |
-| `/api/chatbot/reset`              | POST   | 챗봇 재설정                |
+기여를 환영합니다! Pull Request를 보내주세요.
 
 ## 문제 해결
 
-### economy_terms 폴더에 파일이 없는 경우
+- Python 패키지 충돌 시: `pip install --no-cache-dir -r requirements.txt`
+- ChromaDB 관련 오류: `rm -rf data/chroma_db` 후 재시작
+- 포트 충돌: 다른 포트 사용 (`PORT=8080 python server.py`)
 
-- 콘텐츠 파일을 `data/economy_terms` 폴더에 추가하세요.
-- 마크다운(.md) 형식의 파일을 사용해야 합니다.
+## 지원
 
-### OpenAI API 키 관련 오류
-
-- `.env` 파일이 올바르게 생성되었는지 확인하세요.
-- API 키가 유효한지 확인하세요.
-- 최신 OpenAI API는 결제 정보가 등록되어 있어야 합니다.
-
-### 서버 실행 오류
-
-- `requirements.txt`의 모든 의존성이 설치되었는지 확인하세요.
-- 로그 파일(`server.log`, `rag_chatbot.log`)를 확인하여 상세 오류 정보를 확인하세요.
-
-## 미래 개선 사항
-
-1. **다국어 지원**: 영어 등 추가 언어 지원
-2. **모바일 최적화**: 반응형 디자인 개선
-3. **로컬 LLM 지원**: 오픈소스 LLM을 통한 비용 절감 및 프라이버시 강화
-4. **사용자 피드백 시스템**: 챗봇 응답에 대한 피드백으로 모델 개선
-
-## 라이센스
-
-이 프로젝트는 MIT 라이센스 하에 배포됩니다.
+문의사항은 이슈 트래커를 이용해주세요.

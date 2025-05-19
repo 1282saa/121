@@ -1,8 +1,0 @@
- * Serving Flask app 'server'
- * Debug mode: on
-/Users/yeong-gwang/Desktop/work/서울경제신문/경제용/경제용챗봇/modules/unified_chatbot.py:256: LangChainDeprecationWarning: The method `BaseRetriever.get_relevant_documents` was deprecated in langchain-core 0.1.46 and will be removed in 1.0. Use :meth:`~invoke` instead.
-  docs = self.retriever.get_relevant_documents(query)
-/Users/yeong-gwang/Desktop/work/서울경제신문/경제용/경제용챗봇/modules/unified_chatbot.py:256: LangChainDeprecationWarning: The method `BaseRetriever.get_relevant_documents` was deprecated in langchain-core 0.1.46 and will be removed in 1.0. Use :meth:`~invoke` instead.
-  docs = self.retriever.get_relevant_documents(query)
-/Users/yeong-gwang/Desktop/work/서울경제신문/경제용/경제용챗봇/modules/unified_chatbot.py:256: LangChainDeprecationWarning: The method `BaseRetriever.get_relevant_documents` was deprecated in langchain-core 0.1.46 and will be removed in 1.0. Use :meth:`~invoke` instead.
-  docs = self.retriever.get_relevant_documents(query)
