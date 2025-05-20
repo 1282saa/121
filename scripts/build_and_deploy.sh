@@ -54,13 +54,23 @@ sed -i '' "s|image: .*|image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITOR
 # 6. Kubernetes 배포
 echo -e "\n${GREEN}6. Kubernetes 배포 중...${NC}"
 
-# Secret 생성 (이미 있는 경우 스킵)
-kubectl get secret chatbot-secrets > /dev/null 2>&1
-if [ $? -ne 0 ]; then
-    echo -e "${YELLOW}Secret을 생성해야 합니다. k8s/k8s-secret.yaml 파일을 수정하세요.${NC}"
+# k8s-secret.yaml 파일이 존재하는지 확인
+if [ ! -f "k8s/k8s-secret.yaml" ]; then
+    echo -e "${RED}오류: k8s/k8s-secret.yaml 파일이 없습니다.${NC}"
+    echo -e "${YELLOW}k8s/k8s-secret.yaml.example 파일을 복사하여 k8s/k8s-secret.yaml 파일을 생성하고 실제 API 키를 입력하세요.${NC}"
     echo "다음 명령으로 API 키를 base64로 인코딩하세요:"
     echo "echo -n 'your-api-key' | base64"
     exit 1
+fi
+
+# Secret 생성 (이미 있는 경우 스킵)
+kubectl get secret chatbot-secrets > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+    echo -e "${GREEN}Secret 생성 중...${NC}"
+    kubectl apply -f k8s/k8s-secret.yaml
+else
+    echo -e "${YELLOW}Secret이 이미 존재합니다. 업데이트하려면 다음 명령을 수동으로 실행하세요:${NC}"
+    echo "kubectl apply -f k8s/k8s-secret.yaml"
 fi
 
 # Deployment 적용

@@ -1,5 +1,10 @@
 # 경제용 챗봇 배포 체크리스트
 
+## 보안 주의사항 ⚠️
+- [ ] **중요**: `k8s-secret.yaml` 파일이 `.gitignore`에 추가되었는지 확인
+- [ ] API 키나 비밀값이 GitHub에 절대 커밋되지 않도록 주의
+- [ ] 모든 시크릿은 `k8s-secret.yaml.example` 파일을 참고하여 로컬에서만 설정
+
 ## 1. 프로젝트 구조 ✅
 - [x] 설정 파일들을 `configs/` 디렉토리로 정리
 - [x] 쿠버네티스 파일들을 `k8s/` 디렉토리로 정리
@@ -14,7 +19,8 @@
 - [x] 질의 응답 테스트
 
 ## 3. 쿠버네티스 배포 준비
-- [x] `k8s-secret.yaml` 파일에 base64 인코딩된 API 키 추가
+- [ ] `k8s-secret.yaml.example`을 복사하여 `k8s-secret.yaml` 생성
+- [ ] `k8s-secret.yaml` 파일에 base64 인코딩된 API 키 추가
 - [x] `deployment.yaml` 환경 변수 설정
 - [x] Docker 이미지 버전 관리 (1.0 → 1.1)
 
